@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 45;
+use Test::More tests => 48;
 use Test::Exception;
 
 ## ----------------------------------------------------------------------------
@@ -12,13 +12,34 @@ use Test::Exception;
 # -----------------------------------------------------------------------------
 # File                       stmt branch   cond    sub   time  total
 # ------------------------ ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm            55.1   50.0   57.8   78.1    2.3   59.3
+# /Tree/Simple.pm            53.9   48.9   58.3   75.8    2.1   57.9
 ## ----------------------------------------------------------------------------
 
 use Tree::Simple;
 
 my $BAD_OBJECT = bless({}, "Fail");
 my $TEST_SUB_TREE = Tree::Simple->new("test");
+
+# -----------------------------------------------
+# exceptions for new
+# -----------------------------------------------
+
+# not giving a proper argument for parent
+throws_ok {
+	Tree::Simple->new("test", 0);
+} qr/^Insufficient Arguments \:/, '... this should die';
+
+# not giving a proper argument for parent
+throws_ok {
+	Tree::Simple->new("test", []);
+} qr/^Insufficient Arguments \:/, '... this should die';
+
+# not giving a proper argument for parent
+throws_ok {
+	Tree::Simple->new("test", $BAD_OBJECT);
+} qr/^Insufficient Arguments \:/, '... this should die';
+
+# -----------------------------------------------
 
 my $tree = Tree::Simple->new(Tree::Simple->ROOT);
 

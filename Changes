@@ -1,5 +1,12 @@
 Revision history for Perl extension Tree::Simple.
 	
+1.04 Tues May 18th 2004
+    - The second argument to the Tree::Simple constructor
+      was a parent, and that argument was not getting 
+      properly type checked before attempting to call 
+      'addChild' on it. Now it is properly type checked
+      and will throw an exception if it is not correct.
+    
 1.03 Sun May 9 2004
     - I have added a new method 'getIndex', which will 
       fetch the index of the current tree within it's 

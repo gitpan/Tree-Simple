@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -42,8 +42,13 @@ sub _init {
     $self->{_depth} = undef;    
 	# Now check our $parent value
 	if (defined($parent)) {
-		# and set it as our parent
-		$parent->addChild($self);
+        if (ref($parent) && UNIVERSAL::isa($parent, "Tree::Simple")) {
+            # and set it as our parent
+            $parent->addChild($self);
+        }
+        else {
+            die "Insufficient Arguments : parent argument must be a Tree::Simple object";
+        }
 	}
 	else {
 		$self->{_parent} = ROOT;
@@ -719,7 +724,7 @@ I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Deve
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
  File                                  stmt branch   cond    sub    pod   time  total
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
- /Tree/Simple.pm                      100.0   98.8   86.7  100.0   92.3    5.4   97.5
+ /Tree/Simple.pm                      100.0   98.9   87.5  100.0   92.3    5.4   97.6
  /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    0.1   97.3
  t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0    n/a   70.5  100.0
  t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a    n/a    5.3  100.0
@@ -727,7 +732,7 @@ I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Deve
  t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0    n/a    3.9  100.0
  t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0    n/a    2.6  100.0
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------ 
- Total                                100.0   99.0   87.7  100.0   92.9  100.0   99.1
+ Total                                100.0   99.0   88.2  100.0   92.9  100.0   99.0
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
 
 =head1 OTHER TREE MODULES
@@ -740,7 +745,7 @@ There are a few other Tree modules out there, here is a quick comparison between
 
 This module seems pretty stable and very robust, but it is also very large module. It is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. B<Tree::Simple>, by comparison, is a mere 450 lines of code and another 250 lines of documentation, hence the Simple in the name. B<Tree::DAG_Node> is part of the reason why I wrote B<Tree::Simple>, the author contends that you can use B<Tree::DAG_Node> for simpler purposes if you so desire, for me it is too beefy. 
 
-My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. B<Tree::Simple> on the other hand has 415 tests which covers 99% of the code (see the L<CODE COVERAGE> section above).
+My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. B<Tree::Simple> on the other hand has 424 tests which covers 99% of the code (see the L<CODE COVERAGE> section above).
 
 =item B<Tree::Nary>
 
