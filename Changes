@@ -1,5 +1,10 @@
 Revision history for Perl extension Tree::Simple.
   
+1.08 Wed Aug 25 2004
+    - added the 'height' and 'size' methods
+        - added tests for these
+        - added documentation for these
+  
 1.07 Wed July 28 2004
     - Added the getUID and setUID methods to Tree::Simple, thanks
       to Brett Nuske for that suggestion.

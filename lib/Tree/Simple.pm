@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -324,6 +324,25 @@ sub isLeaf {
 sub isRoot {
 	my ($self) = @_;
 	return ($self->{_parent} eq ROOT);
+}
+
+sub size {
+    my ($self) = @_;
+    my $size = 1;
+    foreach my $child ($self->getAllChildren()) {
+        $size += $child->size();    
+    }
+    return $size;
+}
+
+sub height {
+    my ($self) = @_;
+    my $max_height = 0;
+    foreach my $child ($self->getAllChildren()) {
+        my $child_height = $child->height();
+        $max_height = $child_height if ($max_height < $child_height); 
+    }
+    return $max_height + 1;
 }
 
 ## ----------------------------------------------------------------------------
@@ -692,7 +711,7 @@ Returns true (1) if the invocant's "parent" field is B<ROOT>, returns false (0) 
 
 =back
 
-=head2 Misc. Functions
+=head2 Recursive Functions
 
 =over 4
 
@@ -704,6 +723,20 @@ This method takes a single argument of a subroutine reference C<$func>. If the a
         my ($_tree) = @_;
         print (("\t" x $_tree->getDepth()), $_tree->getNodeValue(), "\n");
         });
+        
+=item B<size>
+
+Returns the total number of nodes in the current tree and all its sub-trees.
+
+=item B<height>
+
+Returns the length of the longest path from the current tree to the furthest leaf node.
+
+=back
+
+=head2 Misc. Functions
+
+=over 4     
 
 =item B<accept ($visitor)>
 
@@ -751,21 +784,14 @@ None that I am aware of. The code is pretty thoroughly tested (see L<CODE COVERA
 
 I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Devel::Cover> report on this module's test suite.
  
- ---------------------------------- ------ ------ ------ ------ ------ ------ ------
- File                                 stmt branch   cond    sub    pod   time  total
- ---------------------------------- ------ ------ ------ ------ ------ ------ ------
- /Tree/Simple.pm                     100.0   98.9   88.9  100.0   96.4    8.8   98.0
- /Tree/Simple/Visitor.pm             100.0   96.2   90.0  100.0  100.0    0.2   97.7
- t/10_Tree_Simple_test.t             100.0    n/a    n/a  100.0    n/a   55.6  100.0
- t/11_Tree_Simple_fixDepth_test.t    100.0    n/a    n/a  100.0    n/a   13.0  100.0
- t/12_Tree_Simple_exceptions_test.t  100.0    n/a    n/a  100.0    n/a   10.2  100.0
- t/13_Tree_Simple_clone_test.t       100.0    n/a    n/a  100.0    n/a    3.2  100.0
- t/20_Tree_Simple_Visitor_test.t      98.9    n/a    n/a   95.5    n/a    8.9   98.2
- t/pod.t                             100.0   50.0    n/a  100.0    n/a    0.0   95.2
- t/pod_coverage.t                    100.0   50.0    n/a  100.0    n/a    0.0   95.2
- ---------------------------------- ------ ------ ------ ------ ------ ------ ------
- Total                                99.9   96.7   89.2   99.3   97.2  100.0   98.8
- ---------------------------------- ------ ------ ------ ------ ------ ------ ------
+ ------------------------- ------ ------ ------ ------ ------ ------ ------
+ File                        stmt branch   cond    sub    pod   time  total
+ ------------------------- ------ ------ ------ ------ ------ ------ ------
+ Tree/Simple.pm             100.0   98.9   88.9  100.0   96.7   93.3   98.1
+ Tree/Simple/Visitor.pm     100.0   96.2   90.0  100.0  100.0    6.7   97.7
+ ------------------------- ------ ------ ------ ------ ------ ------ ------
+ Total                      100.0   98.3   89.2  100.0   97.4  100.0   98.0
+ ------------------------- ------ ------ ------ ------ ------ ------ ------
 
 =head1 SEE ALSO
 

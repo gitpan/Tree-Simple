@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 289;
+use Test::More tests => 291;
 
 BEGIN { 
 	use_ok('Tree::Simple'); 
@@ -911,7 +911,24 @@ $tree->traverse(sub {
 	});
 
 # and compare the two
-ok eq_array(\@_all_node_values, \@all_node_values);
+is_deeply(\@_all_node_values, \@all_node_values, '... our nodes match our control nodes');
+
+## ----------------------------------------------------------------------------
+## test size
+## ----------------------------------------------------------------------------	
+
+cmp_ok($tree->size(), '==', (scalar(@_all_node_values) + 1), '... our size is as we expect it to be');
+
+# NOTE:
+# it is (scalar(@_all_node_values) + 1) so that 
+# we account for the root node which is not in 
+# the list.
+
+## ----------------------------------------------------------------------------
+## test height
+## ----------------------------------------------------------------------------	
+
+cmp_ok($tree->height(), '==', 4, '... our height is as we expect it to be');
 
 ## ----------------------------------------------------------------------------
 ## test clone
