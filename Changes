@@ -1,0 +1,6 @@
+Revision history for Perl extension Tree::Simple.
+
+0.01  Thu Mar 11 10:46:33 2004
+	- original version; created by h2xs 1.22 with options
+		-X -n Tree::Simple
+
