@@ -1,5 +1,10 @@
 Revision history for Perl extension Tree::Simple.
 	
+1.05 Sun June 6th 2004
+    - Fixed some vagueness in the documentation as well 
+      as made sure that the ROOT constant could be given
+      as a the $parent argument.
+    
 1.04 Tues May 18th 2004
     - The second argument to the Tree::Simple constructor
       was a parent, and that argument was not getting 

@@ -31,7 +31,7 @@ can_ok("Tree::Simple", 'new');
 can_ok("Tree::Simple", 'ROOT');
 
 # make a root for our tree
-my $tree = Tree::Simple->new(Tree::Simple->ROOT);
+my $tree = Tree::Simple->new("root tree", Tree::Simple->ROOT);
 isa_ok($tree, 'Tree::Simple');
 
 # test the interface
@@ -83,7 +83,7 @@ ok($tree->isLeaf());
 
 # check the value of the node,
 # it should be root
-is($tree->getNodeValue(), Tree::Simple->ROOT, '... this tree is a root');
+is($tree->getNodeValue(), "root tree", '... this tree is a root');
 
 # we have no children yet
 cmp_ok($tree->getChildCount(), '==', 0, '... we have no children yet');

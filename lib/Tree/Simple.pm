@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -45,6 +45,10 @@ sub _init {
         if (ref($parent) && UNIVERSAL::isa($parent, "Tree::Simple")) {
             # and set it as our parent
             $parent->addChild($self);
+        }
+        elsif ($parent eq ROOT) {
+            $self->{_parent} = $parent;
+            $self->{_depth} = -1;
         }
         else {
             die "Insufficient Arguments : parent argument must be a Tree::Simple object";
@@ -501,7 +505,7 @@ Tree::Simple - A simple tree object
   use Tree::Simple;
   
   # make a tree root
-  my $tree = Tree::Simple->new(Tree::Simple->ROOT);
+  my $tree = Tree::Simple->new("0", Tree::Simple->ROOT);
   
   # explicity add a child to it
   $tree->addChild(Tree::Simple->new("1"));
@@ -664,7 +668,7 @@ Returns true (1) if the invocant does not have any children, false (0) otherwise
 
 =item B<isRoot>
 
-Returns true (1) if the invocant's parent is B<ROOT>, returns false (0) otherwise.
+Returns true (1) if the invocant's "parent" field is B<ROOT>, returns false (0) otherwise.
 
 =back
 
