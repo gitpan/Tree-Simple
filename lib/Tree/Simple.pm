@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -323,7 +323,7 @@ sub isLeaf {
 
 sub isRoot {
 	my ($self) = @_;
-	return ($self->{_parent} eq ROOT);
+	return (!defined($self->{_parent}) || $self->{_parent} eq ROOT);
 }
 
 sub size {
@@ -511,12 +511,13 @@ sub DESTROY {
 	# to call DESTORY on all our children
 	# (first checking if they are defined
 	# though since we never know how perl's
-	# garbage collector will work)
-	unless ($self->isLeaf()) {
-		map {
-			defined $_ && $_->DESTROY()
-		} @{$self->{_children}};
+	# garbage collector will work)    
+	unless (!$self->{_children} && $self->isLeaf()) {
+		foreach my $child (@{$self->{_children}}) { 
+			defined $child && $child->DESTROY();
+		}
 	}
+    $self->{_parent} = undef unless $self->isRoot();
 }
 
 ## ----------------------------------------------------------------------------
@@ -559,6 +560,9 @@ Tree::Simple - A simple tree object
   
   # insert children a specified index
   $sub_tree->insertChild(1, Tree::Simple->new("2.1a"));
+  
+  # clean up circular references
+  $tree->DESTROY();
 
 =head1 DESCRIPTION
 
@@ -636,7 +640,7 @@ Accepts two different arguemnts. If given a B<Tree::Simple> object (C<$child>), 
 
 This method also accepts a numeric C<$index> and removes the child found at that index from it's list of children. The C<$index> is bounds checked, if this condition fail, an exception is thrown.
 
-When a child is removed, it results in the shifting up of all children after it, and the removed child is returned. The removed child is properly disconnected from the tree and all its references to its old parent are removed.
+When a child is removed, it results in the shifting up of all children after it, and the removed child is returned. The removed child is properly disconnected from the tree and all its references to its old parent are removed. However, in order to properly clean up and circular references the removed child might have, it is advised to call it's C<DESTROY> method. See the L<CIRCULAR REFERENCES> section for more information.
 
 =item B<addSibling ($tree)>
 
@@ -754,7 +758,9 @@ This method is an alternate option to the plain C<clone> method. This method all
 
 =item B<DESTROY>
 
-To avoid memory leaks through uncleaned-up circular references, we implement the C<DESTROY> method. This method will attempt to call C<DESTROY> on each of its children (if it as any). This will result in a cascade of calls to C<DESTROY> on down the tree. 
+To avoid memory leaks through uncleaned-up circular references, we implement the C<DESTROY> method. This method will attempt to call C<DESTROY> on each of its children (if it has any). This will result in a cascade of calls to C<DESTROY> on down the tree. It also cleans up it's parental relations as well. 
+
+Because of perl's reference counting scheme and how that interacts with circular references, if you want an object to be properly reaped you should manually call C<DESTROY>. This is especially nessecary if your object has any children. See the section on L<CIRCULAR REFERENCES> for more information.
 
 =item B<fixDepth>
 
@@ -776,6 +782,57 @@ This method sets up the parental relationship. It is for internal use only.
 
 =back
 
+=head1 CIRCULAR REFERENCES
+
+Perl uses reference counting to manage the destruction of objects, and this can cause problems with circularly referencing object like Tree::Simple. In order to properly manage your circular references, it is nessecary to manually call the C<DESTROY> method on a Tree::Simple instance. Here is some example code:
+
+  # create a root
+  my $root = Tree::Simple->new()
+  
+  { # create a lexical scope
+  
+      # create a subtree (with a child)
+      my $subtree = Tree::Simple->new("1")
+                          ->addChild(
+                              Tree::Simple->new("1.1")
+                          );
+                          
+      # add the subtree to the root                    
+      $root->addChild($subtree);                    
+      
+      # ... do something with your trees 
+      
+      # remove the first child
+      $root->removeChild(0);
+  }
+
+At this point you might expect perl to reap C<$subtree> since it has been removed from the C<$root> and is no longer available outside the lexical scope of the block. However, since C<$subtree> itself has a child, its reference count is still (at least) one and perl will not reap it. The solution to this is to call the C<DESTROY> method manually at the end of the lexical block, this will result in the breaking of all relations with the DESTROY-ed object and allow that object to be reaped by perl. Here is a corrected version of the above code.
+
+  # create a root
+  my $root = Tree::Simple->new()
+  
+  { # create a lexical scope
+  
+      # create a subtree (with a child)
+      my $subtree = Tree::Simple->new("1")
+                          ->addChild(
+                              Tree::Simple->new("1.1")
+                          );
+                          
+      # add the subtree to the root                    
+      $root->addChild($subtree);                    
+      
+      # ... do something with your trees 
+      
+      # remove the first child and capture it
+      my $removed = $root->removeChild(0);
+      
+      # now force destruction of the removed child
+      $removed->DESTROY();
+  }
+
+As you can see if the corrected version we used a new variable to capture the removed tree, and then explicitly called C<DESTROY> upon it. Only when a removed subtree has no children (it is a leaf node) can you safely ignore the call to C<DESTROY>. It is even nessecary to call C<DESTROY> on the root node if you want it to be reaped before perl exits, this is especially important in long running environments like mod_perl.
+
 =head1 BUGS
 
 None that I am aware of. The code is pretty thoroughly tested (see L<CODE COVERAGE> below) and is based on an (non-publicly released) module which I had used in production systems for about 2 years without incident. Of course, if you find a bug, let me know, and I will be sure to fix it. 
@@ -784,14 +841,14 @@ None that I am aware of. The code is pretty thoroughly tested (see L<CODE COVERA
 
 I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Devel::Cover> report on this module's test suite.
  
- ------------------------- ------ ------ ------ ------ ------ ------ ------
- File                        stmt branch   cond    sub    pod   time  total
- ------------------------- ------ ------ ------ ------ ------ ------ ------
- Tree/Simple.pm             100.0   98.9   88.9  100.0   96.7   93.3   98.1
- Tree/Simple/Visitor.pm     100.0   96.2   90.0  100.0  100.0    6.7   97.7
- ------------------------- ------ ------ ------ ------ ------ ------ ------
- Total                      100.0   98.3   89.2  100.0   97.4  100.0   98.0
- ------------------------- ------ ------ ------ ------ ------ ------ ------
+ ------------------------ ------ ------ ------ ------ ------ ------ ------
+ File                       stmt branch   cond    sub    pod   time  total
+ ------------------------ ------ ------ ------ ------ ------ ------ ------
+ Tree/Simple.pm            100.0   97.9   86.7  100.0   96.7   94.7   97.4
+ Tree/Simple/Visitor.pm    100.0   96.2   90.0  100.0  100.0    5.3   97.7
+ ------------------------ ------ ------ ------ ------ ------ ------ ------
+ Total                     100.0   97.5   87.5  100.0   97.4  100.0   97.5
+ ------------------------ ------ ------ ------ ------ ------ ------ ------
 
 =head1 SEE ALSO
 
@@ -872,6 +929,8 @@ Is a wrapper around a C library, again B<Tree::Simple> is pure-perl. The author 
 =item Thanks to Nadim Ibn Hamouda El Khemir for making L<Data::TreeDumper> work with B<Tree::Simple>.
 
 =item Thanks to Brett Nuske for his idea for the C<getUID> and C<setUID> methods.
+
+=item Thanks to whoever submitted the memory leak bug to RT (#7512). 
 
 =back
 

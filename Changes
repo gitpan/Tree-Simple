@@ -1,4 +1,12 @@
 Revision history for Perl extension Tree::Simple.
+
+1.09 Tues Aug 31 2004
+    - Fixed DESTROY to avoid memory leaks (RT-BUG: #7512) 
+        - added documentation to explain when to call 
+          the DESTROY method to properly clean up any
+          circular references
+        - added test (14_Tree_Simple_leak_test.t) to 
+          verify this fix (needs Test::Memory::Cycle to run)
   
 1.08 Wed Aug 25 2004
     - added the 'height' and 'size' methods
