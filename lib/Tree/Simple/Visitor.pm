@@ -4,7 +4,7 @@ package Tree::Simple::Visitor;
 use strict;
 use warnings;
 
-our $VERSION = '0.15';
+our $VERSION = '1.0';
  
 ## class constants
 
@@ -65,8 +65,9 @@ Tree::Simple::Visitor - Visitor object for Tree::Simple objects
   use Tree::Simple;
   
   # create an array here, it will valid within the
-  # be in the closure of the subroutine below
+  # the closure of the subroutine below
   my @accumulator;
+  
   # create a visitor with a subroutine and tell it
   # what depth we want to do too (RECURSIVE)
   my $visitor = Tree::Simple::Visitor->new(sub {
@@ -81,7 +82,7 @@ Tree::Simple::Visitor - Visitor object for Tree::Simple objects
                              Tree::Simple->new("1.0"),
                              Tree::Simple->new("2.0")
                                          ->addChild(
-											 Tree::Simple->new("2.1.0")
+                                             Tree::Simple->new("2.1.0")
                                              ),
                              Tree::Simple->new("3.0")
                              );
@@ -95,6 +96,8 @@ Tree::Simple::Visitor - Visitor object for Tree::Simple objects
 =head1 DESCRIPTION
 
 This is a very basic Visitor object for B<Tree::Simple> objects. It is really just an OO wrapper around the C<traverse> method of the B<Tree::Simple> object. 
+
+I consider this module to be production stable, it is based on a module which has been in use on a few production systems for approx. 2 years now with no issue. The only difference is that the code has been cleaned up a bit, comments added and thorough tests written for its public release. I comment on this more in the B<DESCRIPTION> section in B<Tree::Simple>. 
 
 =head1 CONSTANTS
 
@@ -110,6 +113,10 @@ If passed this constant in the constructor, the function will be applied to the 
 
 =back
 
+B<NOTE:>
+
+If not constant is passed to the constructor, then the function will only be applied to the current B<Tree::Simple> object and none of its children.
+
 =head1 METHODS
 
 =over 4
@@ -123,6 +130,10 @@ The first argument to the constructor is a code reference to a function which ex
 The C<visit> method accepts a B<Tree::Simple> and applies the function set in C<new> appropriately. 
 
 =back
+
+=head1 BUGS
+
+None that I am aware of. The code is pretty thoroughly tested (see B<CODE COVERAGE> section in B<Tree::Simple>) and is based on an (non-publicly released) module which I had used in production systems for about 2 years without incident. Of course, if you find a bug, let me know, and I will be sure to fix it. 
 
 =head1 SEE ALSO
 

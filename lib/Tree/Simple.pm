@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '0.15';
+our $VERSION = '1.0';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -469,7 +469,7 @@ Tree::Simple - A simple tree object
   $tree->addChild(Tree::Simple->new("1"));
   
   # specify the parent when creating
-  # the child and add the child implicity
+  # an instance and it adds the child implicity
   my $sub_tree = Tree::Simple->new("2", $tree);
   
   # chain method calls
@@ -494,6 +494,8 @@ This module in an fully object-oriented implementation of a simple n-ary tree. I
 It is can be used to model hierarchal information such as a file-system, the organizational structure of a company, an object inheritance hierarchy, versioned files from a version control system or even an abstract syntax tree for use in a parser. It makes no assumptions as to your intended usage, but instead simply provides the structure and means of accessing and traversing said structure. 
 
 This module uses exceptions and a minimal Design By Contract style. All method arguments are required unless specified in the documentation, if a required argument is not defined an exception will usually be thrown. Many arguments are also required to be of a specific type, for instance the C<$parent> argument to the constructor B<must> be a B<Tree::Simple> object or an object derived from B<Tree::Simple>, otherwise an exception is thrown. This may seems harsh to some, but this allows me to have the confidence that my code works as I intend, and for you to enjoy the same level of confidence when using this module. Note however that this module does not use any Exception or Error module, the exceptions are just strings thrown with C<die>. 
+
+I consider this module to be production stable, it is based on a module which has been in use on a few production systems for approx. 2 years now with no issue. The only difference is that the code has been cleaned up a bit, comments added and the thorough tests written for its public release. I was initially very hesitant to call this 1.0 for fear that reality as we know it would cease to exist, but after thinking it through some more, I realized that it is ready to be called 1.0 code. I am confident it behaves as I would expect it to, and is (as far as I know) bug-free. I have not stress-tested it under extreme duress, but I don't so much intend for it to be used in that type of situation. If this module cannot keep up with your Tree needs, i suggest switching to one of the modules listed in the L<OTHER TREE MODULES> section below.
 
 =head1 CONSTANTS
 
@@ -664,6 +666,10 @@ This method is here largely to facilitate subclassing. This method is called by 
 This method sets up the parental relationship. It is for internal use only.
 
 =back
+
+=head1 BUGS
+
+None that I am aware of. The code is pretty thoroughly tested (see L<CODE COVERAGE> below) and is based on an (non-publicly released) module which I had used in production systems for about 2 years without incident. Of course, if you find a bug, let me know, and I will be sure to fix it. 
 
 =head1 CODE COVERAGE
 
