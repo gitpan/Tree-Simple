@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -573,15 +573,13 @@ This method accepts a numeric C<$index> and a B<Tree::Simple> object (C<$tree>),
 
 This method functions much as insertChild does, but instead of inserting a single B<Tree::Simple>, it inserts an array of B<Tree::Simple> objects. It too bounds checks the value of C<$index> and type checks the objects in C<@trees> just as C<insertChild> does.
 
-=item B<removeChild> ($child)>
+=item B<removeChild> ($child | $index)>
 
-This method removes a specific C<$child> comparing it with all the children until it finds the right one. At which point the C<$child> is removed and returned. If a non-B<Tree::Simple> object is given as the C<$child> argument, an exception is thrown.
+Accepts two different arguemnts. If given a B<Tree::Simple> object (C<$child>), this method finds that specific C<$child> by comparing it with all the other children until it finds a match. At which point the C<$child> is removed. If no match is found, and exception is thrown. If a non-B<Tree::Simple> object is given as the C<$child> argument, an exception is thrown. 
 
-B<NOTE:> I have changed the behavior of the C<removeChild> method. Prior to 1.01, its functionality was that of C<removeChildAt>. However, to maintain backwards compatability, C<removeChild> will dispatch to C<removeChildAt> if it is given an index for an argument.    
+This method also accepts a numeric C<$index> and removes the child found at that index from it's list of children. The C<$index> is bounds checked, if this condition fail, an exception is thrown.
 
-=item B<removeChildAt ($index)>
-
-This method accepts a numeric C<$index> and removes the tree found at that index from it's children list. This results in the shifting up of all children after the C<$index>. The C<$index> is checked to be sure it is the bounds of the child list, if this condition fail, an exception is thrown. The removed child is then returned.
+When a child is removed, it results in the shifting up of all children after it, and the removed child is returned. The removed child is properly disconnected from the tree and all its references to its old parent are removed.
 
 =item B<addSibling ($tree)>
 
