@@ -4,7 +4,9 @@ package Tree::Simple::Visitor;
 use strict;
 use warnings;
 
-our $VERSION = '1.10';
+our $VERSION = '1.11';
+
+use Scalar::Util qw(blessed);
  
 ## class constants
 
@@ -87,7 +89,7 @@ sub getResults {
 # visit routine
 sub visit {
 	my ($self, $tree) = @_;
-	(defined($tree) && ref($tree) && UNIVERSAL::isa($tree, "Tree::Simple"))
+	(blessed($tree) && $tree->isa("Tree::Simple"))
 		|| die "Insufficient Arguments : You must supply a valid Tree::Simple object";
     # get all things set up
 	my @results;

@@ -4,7 +4,9 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.13';
+our $VERSION = '1.14';
+
+use Scalar::Util qw(blessed);
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -46,7 +48,7 @@ sub _init {
     $self->{_width} = 1;
 	# Now check our $parent value
 	if (defined($parent)) {
-        if (ref($parent) && UNIVERSAL::isa($parent, "Tree::Simple")) {
+        if (blessed($parent) && $parent->isa("Tree::Simple")) {
             # and set it as our parent
             $parent->addChild($self);
         }
@@ -67,7 +69,7 @@ sub _init {
 sub _setParent {
 	my ($self, $parent) = @_;
 	(defined($parent) && 
-		(($parent eq ROOT) || (ref($parent) && UNIVERSAL::isa($parent, "Tree::Simple"))))
+		(($parent eq ROOT) || (blessed($parent) && $parent->isa("Tree::Simple"))))
 		|| die "Insufficient Arguments : parent also must be a Tree::Simple object";
 	$self->{_parent} = $parent;
 	if ($parent eq ROOT) {
@@ -118,7 +120,7 @@ sub setUID {
 
 sub addChild {
 	my ($self, $tree) = @_;
-	(defined($tree) && ref($tree) && UNIVERSAL::isa($tree, "Tree::Simple")) 
+	(blessed($tree) && $tree->isa("Tree::Simple")) 
 		|| die "Insufficient Arguments : Child must be a Tree::Simple object";
 	$tree->_setParent($self);
     $self->_setHeight($tree);
@@ -145,7 +147,7 @@ sub insertChildren {
 	(@trees) 
 		|| die "Insufficient Arguments : no tree(s) to insert";	
 	foreach my $tree (@trees) {
-		(defined($tree) && ref($tree) && UNIVERSAL::isa($tree, "Tree::Simple")) 
+        (blessed($tree) && $tree->isa("Tree::Simple")) 
 			|| die "Insufficient Arguments : Child must be a Tree::Simple object";	
 		$tree->_setParent($self);
         $self->_setHeight($tree);   
@@ -227,7 +229,7 @@ sub removeChild {
     return $self->removeChildAt($child_to_remove) unless ref($child_to_remove);
     # now that we are confident its a reference
     # make sure it is the right kind
-    (UNIVERSAL::isa($child_to_remove, "Tree::Simple")) 
+    (blessed($child_to_remove) && $child_to_remove->isa("Tree::Simple")) 
         || die "Insufficient Arguments : Only valid child type is a Tree::Simple object";
     my $index = 0;
     foreach my $child ($self->getAllChildren()) {
@@ -462,12 +464,12 @@ sub traverse {
 # accepting of its arguments
 sub accept {
 	my ($self, $visitor) = @_;
-    # it must be defined, a reference type and ...
-	(defined($visitor) && ref($visitor) && 
+    # it must be a blessed reference and ...
+	(blessed($visitor) && 
         # either a Tree::Simple::Visitor object, or ...
-        (UNIVERSAL::isa($visitor, "Tree::Simple::Visitor") || 
+        ($visitor->isa("Tree::Simple::Visitor") || 
             # it must be an object which has a 'visit' method avaiable
-            (UNIVERSAL::isa($visitor, "UNIVERSAL") && $visitor->can('visit')))) 
+            $visitor->can('visit')))
 		|| die "Insufficient Arguments : You must supply a valid Visitor object";
 	$visitor->visit($self);
 }
@@ -527,7 +529,7 @@ sub _cloneNode {
     # if it is in the cache, then return that
     return $seen->{$node} if exists ${$seen}{$node};
     # if it is an object, then ...	
-    if (UNIVERSAL::isa($node, 'UNIVERSAL')) {
+    if (blessed($node)) {
         # see if we can clone it
         if ($node->can('clone')) {
             $clone = $node->clone();

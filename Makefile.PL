@@ -5,7 +5,8 @@ WriteMakefile(
     'NAME'		    => 'Tree::Simple',
     'VERSION_FROM'	=> 'lib/Tree/Simple.pm',  
     'PREREQ_PM'		=> {
-		'Test::More'      => .47,
-		'Test::Exception' => .15
+		'Test::More'      => 0.47,
+		'Test::Exception' => 0.15,
+        'Scalar::Util'    => 1.10
 		}
 );
