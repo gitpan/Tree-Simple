@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 283;
+use Test::More tests => 289;
 
 BEGIN { 
 	use_ok('Tree::Simple'); 
@@ -87,6 +87,17 @@ cmp_ok($tree->getDepth(), '==', -1, '... we have no depth yet');
 
 # check the index
 cmp_ok($tree->getIndex(), '==', -1, '... root trees have no index');
+
+can_ok($tree, 'getUID');
+
+is($tree->getUID(), $tree->getUID(), '... UIDs match for the same object');
+is("$tree", "Tree::Simple=HASH(" . $tree->getUID() . ")", '... our UID is derived from our hex address'); 
+
+can_ok($tree, 'setUID');
+$tree->setUID("This is our unique identifier");
+
+is($tree->getUID(), 'This is our unique identifier', '... UIDs match what we have set it to');
+isnt("$tree", "Tree::Simple=HASH(" . $tree->getUID() . ")", '... our UID is no longer derived from our hex address'); 
 
 ## ----------------------------------------------------------------------------
 ## testing adding children

@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 49;
+use Test::More tests => 50;
 use Test::Exception;
 
 ## ----------------------------------------------------------------------------
@@ -328,6 +328,14 @@ throws_ok {
 # is not a Tree::Simple object
 throws_ok {
 	$tree->_setParent($BAD_OBJECT);
+} qr/^Insufficient Arguments/, '... this should croak';
+
+# -----------------------------------------------
+# exceptions for setUID
+# -----------------------------------------------
+
+throws_ok {
+	$tree->setUID();
 } qr/^Insufficient Arguments/, '... this should croak';
 
 ## ----------------------------------------------------------------------------

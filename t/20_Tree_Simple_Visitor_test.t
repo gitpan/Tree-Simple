@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 31;
+use Test::More tests => 37;
 use Test::Exception;
 
 BEGIN { 
@@ -155,6 +155,7 @@ throws_ok {
 	$visitor1->visit($BAD_OBJECT);
 } qr/Insufficient Arguments \: You must supply a valid Tree\:\:Simple object/,
    '... we are expecting this error'; 	   
+   
 
 # -----------------------------------------------
 # Test accept & visit
@@ -193,4 +194,36 @@ lives_ok {
 	$tree1->accept($visitor3);
 } '.. this passes fine';
 
-# -----------------------------------------------
+# ----------------------------------------------------
+# test some misc. weirdness to get the coverage up :P
+# ----------------------------------------------------
+
+# check that includeTrunk works as we expect it to
+{
+    my $visitor = Tree::Simple::Visitor->new();
+    ok(!$visitor->includeTrunk(), '... this should be false right now');
+
+    $visitor->includeTrunk("true");
+    ok($visitor->includeTrunk(), '... this should be true now');
+    
+    $visitor->includeTrunk(undef);
+    ok($visitor->includeTrunk(), '... this should be true still');
+    
+    $visitor->includeTrunk("");
+    ok(!$visitor->includeTrunk(), '... this should be false again');
+}
+
+# check that clearNodeFilter works as we expect it to
+{
+    my $visitor = Tree::Simple::Visitor->new();
+    
+    my $filter = sub { "filter" };
+    
+    $visitor->setNodeFilter($filter);
+    is($visitor->getNodeFilter(), $filter, 'our node filter is set correctly');
+    
+    $visitor->clearNodeFilter();
+    ok(! defined($visitor->getNodeFilter()), '... our node filter has now been undefined'); 
+}
+
+

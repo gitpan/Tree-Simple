@@ -1,5 +1,12 @@
 Revision history for Perl extension Tree::Simple.
-	
+  
+1.07 Wed July 28 2004
+    - Added the getUID and setUID methods to Tree::Simple, thanks
+      to Brett Nuske for that suggestion.
+      - added documentation for these methods
+      - added tests for those methods
+    - added t/pod.t and t/pod_coverage.t to the test suite
+                    
 1.06 Mon July 6 2004
     - Changed what the Tree::Simple accept method accepts
         - added tests for this
@@ -41,7 +48,7 @@ Revision history for Perl extension Tree::Simple.
           
 1.01 Wed April 28 2004
     - Made API change:
-        - removeChild($index) is not removeChildAt($index)
+        - removeChild($index) is now removeChildAt($index)
           and removeChild($child) has replaced it. See the
           documentation for more info.
         - backwards compatability maintained under change.

@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -33,6 +33,8 @@ sub new {
 
 sub _init {
 	my ($self, $node, $parent, $children) = @_;
+    # set the value of the unique id
+    ($self->{_uid}) = ("$self" =~ /\((.*?)\)$/);
 	# set the value of the node
 	$self->{_node} = $node;
 	# and set the value of _children
@@ -81,6 +83,12 @@ sub setNodeValue {
 	my ($self, $node_value) = @_;
 	(defined($node_value)) || die "Insufficient Arguments : must supply a value for node";
 	$self->{_node} = $node_value;
+}
+
+sub setUID {
+    my ($self, $uid) = @_;
+    ($uid) || die "Insufficient Arguments : Custom Unique ID's must be a true value";
+    $self->{_uid} = $uid;
 }
 
 ## ----------------------------------------------
@@ -250,6 +258,11 @@ sub insertSiblings {
 
 ## ----------------------------------------------------------------------------
 ## accessors
+
+sub getUID {
+    my ($self) = @_;
+    return $self->{_uid};
+}
 
 sub getParent {
 	my ($self)= @_;
@@ -568,6 +581,10 @@ The constructor accepts two arguments a C<$node> value and an optional C<$parent
 
 This sets the node value to the scalar C<$node_value>, an exception is thrown if C<$node_value> is not defined.
 
+=item B<setUID ($uid)>
+
+This allows you to set your own unique ID for this specific Tree::Simple object. A default value derived from the object's hex address is provided for you, so use of this method is entirely optional. It is the responsibility of the user to ensure the value's uniqueness, all that is tested by this method is that C<$uid> is a true value (evaluates to true in a boolean context). For even more information about the Tree::Simple UID see the C<getUID> method.
+
 =item B<addChild ($tree)>
 
 This method accepts only B<Tree::Simple> objects or objects derived from B<Tree::Simple>, an exception is thrown otherwise. This method will append the given C<$tree> to the end of it's children list, and set up the correct parent-child relationships. This method is set up to return its invocant so that method call chaining can be possible. Such as:
@@ -624,6 +641,10 @@ There is no C<removeSibling> method as I felt it was probably a bad idea. The sa
 =item B<getNodeValue>
 
 This returns the value stored in the object's node field.
+
+=item B<getUID>
+
+This returns the unique ID associated with this particular tree. This can be custom set using the C<setUID> method, or you can just use the default. The default is the hex-address extracted from the stringified Tree::Simple object. This may not be a I<universally> unique identifier, but it should be adequate for at least the current instance of your perl interpreter. If you need a UUID, one can be generated with an outside module (there are many to choose from on CPAN) and the C<setUID> method (see above).
 
 =item B<getChild ($index)>
 
@@ -686,7 +707,9 @@ This method takes a single argument of a subroutine reference C<$func>. If the a
 
 =item B<accept ($visitor)>
 
-It accepts either a B<Tree::Simple::Visitor> object (which includes classes derived from B<Tree::Simple::Visitor>), or an object who has the C<visit> method available (tested with C<$visitor-E<gt>can('visit')>). If these qualifications are not met, and exception will be thrown. We then run the Visitor's C<visit> method giving the current tree as its argument.
+It accepts either a B<Tree::Simple::Visitor> object (which includes classes derived from B<Tree::Simple::Visitor>), or an object who has the C<visit> method available (tested with C<$visitor-E<gt>can('visit')>). If these qualifications are not met, and exception will be thrown. We then run the Visitor's C<visit> method giving the current tree as its argument. 
+
+I have also created a number of Visitor objects and packaged them into the B<Tree::Simple::VisitorFactory>. 
 
 =item B<clone>
 
@@ -699,6 +722,10 @@ This method is an alternate option to the plain C<clone> method. This method all
 =item B<DESTROY>
 
 To avoid memory leaks through uncleaned-up circular references, we implement the C<DESTROY> method. This method will attempt to call C<DESTROY> on each of its children (if it as any). This will result in a cascade of calls to C<DESTROY> on down the tree. 
+
+=item B<fixDepth>
+
+For the most part, Tree::Simple will manage your tree's depth fields for you. But occasionally your tree's depth may get out of place. If you run this method, it will traverse your tree correcting the depth as it goes.
 
 =back
 
@@ -724,19 +751,21 @@ None that I am aware of. The code is pretty thoroughly tested (see L<CODE COVERA
 
 I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Devel::Cover> report on this module's test suite.
  
- ----------------------------------- ------ ------ ------ ------ ------ ------ ------
- File                                  stmt branch   cond    sub    pod   time  total
- ----------------------------------- ------ ------ ------ ------ ------ ------ ------
- /Tree/Simple.pm                      100.0   98.9   88.9  100.0   92.3   13.8   97.7
- /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    5.1   98.3
- t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0    n/a   46.6  100.0
- t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a    n/a    3.5  100.0
- t/12_Tree_Simple_exceptions_test.t   100.0    n/a    n/a  100.0    n/a   10.2  100.0
- t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0    n/a    9.1  100.0
- t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0    n/a   11.6  100.0
- ----------------------------------- ------ ------ ------ ------ ------ ------ ------ 
- Total                                100.0   99.1   89.2  100.0   93.8  100.0   99.1
- ----------------------------------- ------ ------ ------ ------ ------ ------ ------
+ ---------------------------------- ------ ------ ------ ------ ------ ------ ------
+ File                                 stmt branch   cond    sub    pod   time  total
+ ---------------------------------- ------ ------ ------ ------ ------ ------ ------
+ /Tree/Simple.pm                     100.0   98.9   88.9  100.0   96.4    8.8   98.0
+ /Tree/Simple/Visitor.pm             100.0   96.2   90.0  100.0  100.0    0.2   97.7
+ t/10_Tree_Simple_test.t             100.0    n/a    n/a  100.0    n/a   55.6  100.0
+ t/11_Tree_Simple_fixDepth_test.t    100.0    n/a    n/a  100.0    n/a   13.0  100.0
+ t/12_Tree_Simple_exceptions_test.t  100.0    n/a    n/a  100.0    n/a   10.2  100.0
+ t/13_Tree_Simple_clone_test.t       100.0    n/a    n/a  100.0    n/a    3.2  100.0
+ t/20_Tree_Simple_Visitor_test.t      98.9    n/a    n/a   95.5    n/a    8.9   98.2
+ t/pod.t                             100.0   50.0    n/a  100.0    n/a    0.0   95.2
+ t/pod_coverage.t                    100.0   50.0    n/a  100.0    n/a    0.0   95.2
+ ---------------------------------- ------ ------ ------ ------ ------ ------ ------
+ Total                                99.9   96.7   89.2   99.3   97.2  100.0   98.8
+ ---------------------------------- ------ ------ ------ ------ ------ ------ ------
 
 =head1 SEE ALSO
 
@@ -752,6 +781,20 @@ I have written a number of other modules which use or augment this module, they 
 
 =back
 
+Also, the author of B<Data::TreeDumper> and I have worked together to make sure that B<Tree::Simple> and his module work well together. If you need a quick and handy way to dump out a Tree::Simple heirarchy, this module does an excellent job (and plenty more as well).
+
+I have also recently stumbled upon some packaged distributions of Tree::Simple for the various Unix flavors. Here  are some links:
+
+=over 4
+
+=item FreeBSD Port - L<http://www.freshports.org/devel/p5-Tree-Simple/>
+
+=item Debian Package - L<http://packages.debian.org/unstable/perl/libtree-simple-perl>
+
+=item Linux RPM - L<http://rpmpan.sourceforge.net/Tree.html>
+
+=back
+
 =head1 OTHER TREE MODULES
 
 There are a few other Tree modules out there, here is a quick comparison between B<Tree::Simple> and them. Obviously I am biased, so take what I say with a grain of salt, and keep in mind, I wrote B<Tree::Simple> because I could not find a Tree module that suited my needs. If B<Tree::Simple> does not fit your needs, I recommend looking at these modules. Please note that I only list registered Tree::* modules here, I have only seen a few other modules outside of that namespace that seem to fit, although most of them are part of another distribution (B<HTML::Tree>, B<Pod::Tree>, etc). 
@@ -760,9 +803,9 @@ There are a few other Tree modules out there, here is a quick comparison between
 
 =item B<Tree::DAG_Node>
 
-This module seems pretty stable and very robust, but it is also very large module. It is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. B<Tree::Simple>, by comparison, is a mere 450 lines of code and another 250 lines of documentation, hence the Simple in the name. B<Tree::DAG_Node> is part of the reason why I wrote B<Tree::Simple>, the author contends that you can use B<Tree::DAG_Node> for simpler purposes if you so desire, for me it is too beefy. 
+This module seems pretty stable and very robust, but it is also very large module. It is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. B<Tree::Simple>, by comparison, is around 500 lines of code and another 330 lines of documentation. B<Tree::DAG_Node> is part of the reason why I wrote B<Tree::Simple>, the author contends that you can use B<Tree::DAG_Node> for simpler purposes if you so desire, for me it is too beefy. 
 
-My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. B<Tree::Simple> on the other hand has 434 tests which covers 99.1% of the code (see the L<CODE COVERAGE> section above).
+My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is.
 
 =item B<Tree::Nary>
 
@@ -793,6 +836,16 @@ Is a wrapper for a C++ library, whereas B<Tree::Simple> is pure-perl. It also se
 =item B<Tree::Fat>
 
 Is a wrapper around a C library, again B<Tree::Simple> is pure-perl. The author describes FAT-trees as a combination of a Tree and an array. It looks like a pretty mean and lean module, and good if you need speed and are implementing a custom data-store of some kind. The author points out too that the module is designed for embedding and there is not default embedding, so you can't really use it "out of the box".
+
+=back
+
+=head1 ACKNOWLEDGEMENTS
+
+=over 4
+
+=item Thanks to Nadim Ibn Hamouda El Khemir for making L<Data::TreeDumper> work with B<Tree::Simple>.
+
+=item Thanks to Brett Nuske for his idea for the C<getUID> and C<setUID> methods.
 
 =back
 
