@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.11';
+our $VERSION = '1.12';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -407,98 +407,100 @@ sub accept {
 ## cloning 
 
 sub clone {
-	my ($self) = @_;
-	# create a empty tree
-	my $cloned_tree = {
-		# do not clone the parent, this
-		# would cause serious recursion
-		_parent => $self->{_parent},
-		# depth is just a number so can 
-		# be copied by value
-		_depth => $self->{_depth},
-		# leave node undefined for now
-		_node => undef,
-		# and _children empty for now
-		_children => []
-		};
-	# we need to clone the node	
-	my $temp_node = $self->{_node};	
-	# if the node is not a reference, 
-	# a subroutine reference, a RegEx reference 
-	# or a filehandle reference, then just copy
-	# it to the new object. 
-	if (not ref($temp_node)       || 
-		ref($temp_node) eq "CODE" || 
-		ref($temp_node) eq "IO"   || 
-		ref($temp_node) eq "Regexp") {
-		$cloned_tree->{_node} = $temp_node;
-	}
-	# if the current slot is a scalar reference, then
-	# dereference it and copy it into the new object
-	elsif (ref($temp_node) eq "SCALAR") {
-		my $temp_scalar = ${$temp_node};
-		$cloned_tree->{_node} = \$temp_scalar;
-	}
-	
-		## NOTE:
-		# a Hash or an Array reference can potentially hold 
-		# other references within them, such as a multi-dimensional
-		# array or an array of hashes, or a hash of arrays, or any
-		# such combination. So if you need this structure to be 
-		# copied in depth, it is advised to override this method
-		# with a more appropriate one. Otherwise you will receive
-		# a shallow copy of these data-structures. Of course, there
-		# will be times when a shallow copy is most appropriate. 
-		# And at other times it may make more sense to not
-		# incur the overhead of the while loop and all the testing that
-		# is going on in here.
-		
-	# if the current slot is an array reference
-	# then dereference it and copy it
-	elsif (ref($temp_node) eq "ARRAY") {
-		$cloned_tree->{_node} = [ @{$temp_node} ];
-	}
-	# if the current reference is a hash reference
-	# then dereference it and copy it
-	elsif (ref($temp_node) eq "HASH") {
-		$cloned_tree->{_node} = { %{$temp_node} };
-	}
-	# if the current slot is another object
-	# see if the object has a clone method, 
-	#  and if so, use it to clone it.
-	elsif (UNIVERSAL::isa($temp_node, "UNIVERSAL") && $temp_node->can("clone")){
-		$cloned_tree->{_node} = $temp_node->clone();
-	}
-	else {
-		# all other instances where the current slot is
-		# a reference but not cloneable are assumed to be
-		# un-cloneable object of some sort
-		# and the author of the code intends it to not
-		# be cloneable as such.
-		$cloned_tree->{_node} = $temp_node;
-	}	
-	# now we run through the _children and 
-	# clone each one of them too
-	$cloned_tree->{_children} = [
-				map { $_->clone() } @{$self->{_children}}
-				] unless $self->isLeaf();
-	bless($cloned_tree, ref($self));
-	return $cloned_tree;
+    my ($self) = @_;
+    # first clone the value in the node
+    my $cloned_node = _cloneNode($self->getNodeValue());
+    # create a new Tree::Simple object 
+    # here with the cloned node, however
+    # we do not assign the parent node
+    # since it really does not make a lot
+    # of sense. To properly clone it would
+    # be to clone back up the tree as well,
+    # which IMO is not intuitive. So in essence
+    # when you clone a tree, you detach it from
+    # any parentage it might have
+    my $clone = $self->new($cloned_node);
+    # however, because it is a recursive thing
+    # when you clone all the children, and then
+    # add them to the clone, you end up setting
+    # the parent of the children to be that of
+    # the clone (which is correct)
+    $clone->addChildren(
+                map { $_->clone() } $self->getAllChildren()
+                ) unless $self->isLeaf();
+    # return the clone            
+    return $clone;
 }
-
-# this allows cloning of single nodes while retaining connections to a tree
+    
+# this allows cloning of single nodes while 
+# retaining connections to a tree, this is sloppy
 sub cloneShallow {
 	my ($self) = @_;
 	my $cloned_tree = { %{$self} };
+	bless($cloned_tree, ref($self));    
 	# just clone the node (if you can)
-	$cloned_tree->{_node} = $self->{_node}->clone()
-		if (UNIVERSAL::isa($self->{_node}, "UNIVERSAL") && $self->{_node}->can("clone"));
-	# if it can not clone, then we can
-	# just rely on the copy of node that
-	# already there
-	bless($cloned_tree, ref($self));
+	$cloned_tree->setNodeValue(_cloneNode($self->getNodeValue()));
 	return $cloned_tree;	
 }
+
+# this is a helper function which 
+# recursively clones the node
+sub _cloneNode {
+    my ($node, $seen) = @_;
+    # create a cache if we dont already
+    # have one to prevent circular refs
+    # from being copied more than once
+    $seen = {} unless defined $seen;
+    # now here we go...
+    my $clone;
+    # if it is not a reference, then lets just return it
+    return $node unless ref($node);
+    # if it is in the cache, then return that
+    return $seen->{$node} if exists ${$seen}{$node};
+    # if it is an object, then ...	
+    if (UNIVERSAL::isa($node, 'UNIVERSAL')) {
+        # see if we can clone it
+        if ($node->can('clone')) {
+            $clone = $node->clone();
+        }
+        # otherwise respect that it does 
+        # not want to be cloned
+        else {
+            $clone = $node;
+        }
+    }
+    else {
+        # if the current slot is a scalar reference, then
+        # dereference it and copy it into the new object
+        if (ref($node) eq "SCALAR" || ref($node) eq "REF") {
+            my $var = "";
+            $clone = \$var;
+            ${$clone} = _cloneNode(${$node}, $seen);
+        }
+        # if the current slot is an array reference
+        # then dereference it and copy it
+        elsif (ref($node) eq "ARRAY") {
+            $clone = [ map { _cloneNode($_, $seen) } @{$node} ];
+        }
+        # if the current reference is a hash reference
+        # then dereference it and copy it
+        elsif (ref($node) eq "HASH") {
+            $clone = {};
+            foreach my $key (keys %{$node}) {
+                $clone->{$key} = _cloneNode($node->{$key}, $seen);
+            }
+        }
+        else {
+            # all other ref types are not copied
+            $clone = $node;
+        }
+    }
+    # store the clone in the cache and 
+    $seen->{$node} = $clone;        
+    # then return the clone
+    return $clone;
+}
+
 
 ## ----------------------------------------------------------------------------
 ## Desctructor
@@ -596,7 +598,7 @@ The constructor accepts two arguments a C<$node> value and an optional C<$parent
 
 =back
 
-=head2 Mutators
+=head2 Mutator Methods
 
 =over 4
 
@@ -657,7 +659,7 @@ The C<addSibling>, C<addSiblings>, C<insertSibling> and C<insertSiblings> method
 B<NOTE:>
 There is no C<removeSibling> method as I felt it was probably a bad idea. The same effect can be achieved by manual upwards traversal. 
 
-=head2 Accessors
+=head2 Accessor Methods
 
 =over 4
 
@@ -701,7 +703,7 @@ Returns the index of this tree within its parent's child list. Returns -1 if the
 
 =back
 
-=head2 Predicates
+=head2 Predicate Methods
 
 =over 4
 
@@ -715,7 +717,7 @@ Returns true (1) if the invocant's "parent" field is B<ROOT>, returns false (0) 
 
 =back
 
-=head2 Recursive Functions
+=head2 Recursive Methods
 
 =over 4
 
@@ -738,7 +740,7 @@ Returns the length of the longest path from the current tree to the furthest lea
 
 =back
 
-=head2 Misc. Functions
+=head2 Visitor Methods
 
 =over 4     
 
@@ -748,13 +750,29 @@ It accepts either a B<Tree::Simple::Visitor> object (which includes classes deri
 
 I have also created a number of Visitor objects and packaged them into the B<Tree::Simple::VisitorFactory>. 
 
+=back
+
+=head2 Cloning Methods
+
+Cloning a tree can be an extremly expensive operation for large trees, so we provide two options for cloning, a deep clone and a shallow clone.
+
+When a Tree::Simple object is cloned, the node is deep-copied in the following manner. If we find a normal scalar value (non-reference), we simply copy it. If we find an object, we attempt to call C<clone> on it, otherwise we just copy the reference (since we assume the object does not want to be cloned). If we find a SCALAR, REF reference we copy the value contained within it. If we find a HASH or ARRAY reference we copy the reference and recursively copy all the elements within it (following these exact guidelines). We also do our best to assure that circular references are cloned only once and connections restored correctly. This cloning will not be able to copy CODE, RegExp and GLOB references, as they are pretty much impossible to clone. We also do not handle C<tied> objects, and they will simply be copied as plain references, and not re-C<tied>. 
+
+=over 4
+
 =item B<clone>
 
-The clone method does a full deep-copy clone of the object, calling C<clone> recursively on all its children. This does not call C<clone> on the parent tree however. Doing this would result in a slowly degenerating spiral of recursive death, so it is not recommended and therefore not implemented. What it does do is to copy the parent reference, which is a much more sensible act, and tends to be closer to what we are looking for. This can be a very expensive operation, and should only be undertaken with great care. More often than not, this method will not be appropriate. I recommend using the C<cloneShallow> method instead.
+The clone method does a full deep-copy clone of the object, calling C<clone> recursively on all its children. This does not call C<clone> on the parent tree however. Doing this would result in a slowly degenerating spiral of recursive death, so it is not recommended and therefore not implemented. What happens is that the tree instance that C<clone> is actually called upon is detached from the tree, and becomes a root node, all if the cloned children are then attached as children of that tree. I personally think this is more intuitive then to have the cloning crawl back I<up> the tree is not what I think most people would expect. 
 
 =item B<cloneShallow>
 
-This method is an alternate option to the plain C<clone> method. This method allows the cloning of single B<Tree::Simple> object while retaining connections to the rest of the tree/hierarchy. This will attempt to call C<clone> on the invocant's node if the node is an object (and responds to C<$obj-E<gt>can('clone')>) otherwise it will just copy it.
+This method is an alternate option to the plain C<clone> method. This method allows the cloning of single B<Tree::Simple> object while retaining connections to the rest of the tree/hierarchy.
+
+=back
+
+=head2 Misc. Methods
+
+=over 4
 
 =item B<DESTROY>
 
@@ -844,10 +862,10 @@ I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Deve
  ------------------------ ------ ------ ------ ------ ------ ------ ------
  File                       stmt branch   cond    sub    pod   time  total
  ------------------------ ------ ------ ------ ------ ------ ------ ------
- Tree/Simple.pm            100.0   97.9   86.7  100.0   96.7   94.7   97.4
- Tree/Simple/Visitor.pm    100.0   96.2   90.0  100.0  100.0    5.3   97.7
+ Tree/Simple.pm             99.5   96.9   91.7  100.0   96.7   95.6   97.9
+ Tree/Simple/Visitor.pm    100.0   96.2   90.0  100.0  100.0    4.4   97.6
  ------------------------ ------ ------ ------ ------ ------ ------ ------
- Total                     100.0   97.5   87.5  100.0   97.4  100.0   97.5
+ Total                      99.6   96.8   91.2  100.0   97.4  100.0   97.8
  ------------------------ ------ ------ ------ ------ ------ ------ ------
 
 =head1 SEE ALSO

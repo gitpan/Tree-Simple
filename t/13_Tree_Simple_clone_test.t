@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 32;
+use Test::More tests => 48;
 
 ## ----------------------------------------------------------------------------
 # NOTE:
@@ -11,11 +11,13 @@ use Test::More tests => 32;
 
 use Tree::Simple;
 
-my $tree = Tree::Simple->new();
+my $tree = Tree::Simple->new(Tree::Simple->ROOT);
+isa_ok($tree, 'Tree::Simple');
 
 my $test = "test";
 
 my $SCALAR_REF = \$test;
+my $REF_TO_REF = \$SCALAR_REF;
 my $ARRAY_REF = [ 1, 2, 3, 4 ];
 my $HASH_REF = { one => 1, two => 2 };
 my $CODE_REF = sub { "code ref test" };
@@ -31,10 +33,19 @@ $tree->addChildren(
 		Tree::Simple->new($CODE_REF),
 		Tree::Simple->new($REGEX_REF),
 		Tree::Simple->new($MISC_OBJECT),
-		Tree::Simple->new($SUB_TREE)
+		Tree::Simple->new($SUB_TREE),
+		Tree::Simple->new($REF_TO_REF)        
 		);
 
 my $clone = $tree->clone();
+isa_ok($clone, 'Tree::Simple');
+
+# make sure all the parentage is correct
+is($clone->getParent(), Tree::Simple->ROOT, '... the clones parent is a root');
+
+for my $child ($clone->getAllChildren()) {
+    is($child->getParent(), $clone, '... the clones childrens parent should be our clone');
+}
 
 isnt($clone, $tree, '... these should be refs');
 
@@ -101,6 +112,16 @@ isnt($clone->getChild(7)->getNodeValue(), $tree->getChild(7)->getNodeValue(),
 # with the same value	
 is($clone->getChild(7)->getNodeValue()->getNodeValue(), $tree->getChild(7)->getNodeValue()->getNodeValue(), 
 	'... these should have the same contents');	
+    
+# they should both be scalar refs
+is(ref($clone->getChild(8)->getNodeValue()), "REF", '... these should be refs of refs');
+is(ref($tree->getChild(8)->getNodeValue()), "REF", '... these should be refs of refs');
+# but different ones
+isnt($clone->getChild(8)->getNodeValue(), $tree->getChild(8)->getNodeValue(), 
+	'... these should be different scalar refs');
+# with the same ref value
+is(${${$clone->getChild(8)->getNodeValue()}}, ${${$tree->getChild(8)->getNodeValue()}}, 
+	'... these should be the same value');    
 
 # test cloneShallow
 

@@ -1,5 +1,14 @@
 Revision history for Perl extension Tree::Simple.
 
+1.12 Thurs Oct 7 2004
+    - fixed the clone method, it was not correctly
+      cloning parental relationships
+        - added tests and docs for this
+    - improved clone and cloneShallow with the addition
+      of the _cloneNode utility function, we now deep
+      clone the nodes
+        - added test and docs for this
+
 1.11 Mon Oct 4 2004
     - some documentation changes, no code changes
 
