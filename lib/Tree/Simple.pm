@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -325,10 +325,10 @@ sub isRoot {
 # manner, this is usually not an issue
 # since each time you either add a child
 # or create a tree you are doing it with 
-# a single tree and not a heirarchy.
+# a single tree and not a hierarchy.
 # If however you are creating your tree
 # bottom-up, then you might find that 
-# when adding heirarchies of trees, your
+# when adding hierarchies of trees, your
 # depth fields are all out of whack.
 # This is where this method comes into play
 # it will recurse down the tree and fix the
@@ -356,19 +356,18 @@ sub traverse {
 	}
 }
 
-# It accepts a Tree::Simple::Visitor object
-# (or somethings derived
-# from a Tree::Simple::Visitor) and runs
-# the Visitor's "visit" method.
-# We verify with an assertion
-# that it is in fact a valid
-# Tree::Simple::Visitor object and that it does
-# have a method "visit" at 
-# its disposal. 
+# this is an improved version of the 
+# old accept method, it now it more
+# accepting of its arguments
 sub accept {
 	my ($self, $visitor) = @_;
-	(defined($visitor) && ref($visitor) && UNIVERSAL::isa($visitor, "Tree::Simple::Visitor")) 
-		|| die "Insufficient Arguments : You must supply a valid Tree::Simple::Visitor object";
+    # it must be defined, a reference type and ...
+	(defined($visitor) && ref($visitor) && 
+        # either a Tree::Simple::Visitor object, or ...
+        (UNIVERSAL::isa($visitor, "Tree::Simple::Visitor") || 
+            # it must be an object which has a 'visit' method avaiable
+            (UNIVERSAL::isa($visitor, "UNIVERSAL") && $visitor->can('visit')))) 
+		|| die "Insufficient Arguments : You must supply a valid Visitor object";
 	$visitor->visit($self);
 }
 
@@ -537,7 +536,7 @@ It is can be used to model hierarchal information such as a file-system, the org
 
 This module uses exceptions and a minimal Design By Contract style. All method arguments are required unless specified in the documentation, if a required argument is not defined an exception will usually be thrown. Many arguments are also required to be of a specific type, for instance the C<$parent> argument to the constructor B<must> be a B<Tree::Simple> object or an object derived from B<Tree::Simple>, otherwise an exception is thrown. This may seems harsh to some, but this allows me to have the confidence that my code works as I intend, and for you to enjoy the same level of confidence when using this module. Note however that this module does not use any Exception or Error module, the exceptions are just strings thrown with C<die>. 
 
-I consider this module to be production stable, it is based on a module which has been in use on a few production systems for approx. 2 years now with no issue. The only difference is that the code has been cleaned up a bit, comments added and the thorough tests written for its public release. I was initially very hesitant to call this 1.0 for fear that reality as we know it would cease to exist, but after thinking it through some more, I realized that it is ready to be called 1.0 code. I am confident it behaves as I would expect it to, and is (as far as I know) bug-free. I have not stress-tested it under extreme duress, but I don't so much intend for it to be used in that type of situation. If this module cannot keep up with your Tree needs, i suggest switching to one of the modules listed in the L<OTHER TREE MODULES> section below.
+I consider this module to be production stable, it is based on a module which has been in use on a few production systems for approx. 2 years now with no issue. The only difference is that the code has been cleaned up a bit, comments added and the thorough tests written for its public release. I am confident it behaves as I would expect it to, and is (as far as I know) bug-free. I have not stress-tested it under extreme duress, but I don't so much intend for it to be used in that type of situation. If this module cannot keep up with your Tree needs, i suggest switching to one of the modules listed in the L<OTHER TREE MODULES> section below.
 
 =head1 CONSTANTS
 
@@ -687,7 +686,7 @@ This method takes a single argument of a subroutine reference C<$func>. If the a
 
 =item B<accept ($visitor)>
 
-It accepts a B<Tree::Simple::Visitor> object (or somethings derived from a B<Tree::Simple::Visitor>) and runs the Visitor's C<visit> method. We verify with an assertion that it is in fact a valid B<Tree::Simple::Visitor> object and that it does have a method B<visit> at its disposal. 
+It accepts either a B<Tree::Simple::Visitor> object (which includes classes derived from B<Tree::Simple::Visitor>), or an object who has the C<visit> method available (tested with C<$visitor-E<gt>can('visit')>). If these qualifications are not met, and exception will be thrown. We then run the Visitor's C<visit> method giving the current tree as its argument.
 
 =item B<clone>
 
@@ -728,16 +727,30 @@ I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Deve
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
  File                                  stmt branch   cond    sub    pod   time  total
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
- /Tree/Simple.pm                      100.0   98.9   87.5  100.0   92.3    5.4   97.6
- /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    0.1   97.3
- t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0    n/a   70.5  100.0
- t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a    n/a    5.3  100.0
- t/12_Tree_Simple_exceptions_test.t   100.0    n/a    n/a  100.0    n/a    5.8  100.0
- t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0    n/a    3.9  100.0
- t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0    n/a    2.6  100.0
+ /Tree/Simple.pm                      100.0   98.9   88.9  100.0   92.3   13.8   97.7
+ /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    5.1   98.3
+ t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0    n/a   46.6  100.0
+ t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a    n/a    3.5  100.0
+ t/12_Tree_Simple_exceptions_test.t   100.0    n/a    n/a  100.0    n/a   10.2  100.0
+ t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0    n/a    9.1  100.0
+ t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0    n/a   11.6  100.0
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------ 
- Total                                100.0   99.0   88.2  100.0   92.9  100.0   99.0
+ Total                                100.0   99.1   89.2  100.0   93.8  100.0   99.1
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
+
+=head1 SEE ALSO
+
+I have written a number of other modules which use or augment this module, they are describes below and available on CPAN.
+
+=over 4
+
+=item B<Tree::Parser> - A module for parsing formatted files into Tree::Simple hierarchies.
+
+=item B<Tree::Simple::View> - A set of classes for viewing Tree::Simple hierarchies in various output formats.
+
+=item B<Tree::Simple::VisitorFactory> - A set of useful Visitor objects for Tree::Simple objects.
+
+=back
 
 =head1 OTHER TREE MODULES
 
@@ -749,7 +762,7 @@ There are a few other Tree modules out there, here is a quick comparison between
 
 This module seems pretty stable and very robust, but it is also very large module. It is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. B<Tree::Simple>, by comparison, is a mere 450 lines of code and another 250 lines of documentation, hence the Simple in the name. B<Tree::DAG_Node> is part of the reason why I wrote B<Tree::Simple>, the author contends that you can use B<Tree::DAG_Node> for simpler purposes if you so desire, for me it is too beefy. 
 
-My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. B<Tree::Simple> on the other hand has 424 tests which covers 99% of the code (see the L<CODE COVERAGE> section above).
+My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. B<Tree::Simple> on the other hand has 434 tests which covers 99.1% of the code (see the L<CODE COVERAGE> section above).
 
 =item B<Tree::Nary>
 
@@ -782,10 +795,6 @@ Is a wrapper for a C++ library, whereas B<Tree::Simple> is pure-perl. It also se
 Is a wrapper around a C library, again B<Tree::Simple> is pure-perl. The author describes FAT-trees as a combination of a Tree and an array. It looks like a pretty mean and lean module, and good if you need speed and are implementing a custom data-store of some kind. The author points out too that the module is designed for embedding and there is not default embedding, so you can't really use it "out of the box".
 
 =back
-
-=head1 SEE ALSO
-
-B<Tree::Simple::Visitor>
 
 =head1 AUTHOR
 

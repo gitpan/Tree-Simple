@@ -2,23 +2,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 22;
+use Test::More tests => 31;
 use Test::Exception;
 
 BEGIN { 
 	use_ok('Tree::Simple::Visitor'); 	
 };
-
-## ----------------------------------------------------------------------------
-## Test for Tree::Simple::Visitor
-## ----------------------------------------------------------------------------
-# Code coverage stats for this test:
-# -----------------------------------------------------------------------------
-# File                       stmt branch   cond    sub   time  total
-# ------------------------ ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm            33.8   12.2   17.8   39.3    4.6   31.7
-# /Tree/Simple/Visitor.pm   100.0  100.0   90.0  100.0    3.3   96.2
-## ----------------------------------------------------------------------------
 
 use Tree::Simple;
 
@@ -28,14 +17,71 @@ $SIMPLE_SUB->();
 
 # check that we have a constructor
 can_ok("Tree::Simple::Visitor", 'new');
+
+# -----------------------------------------------
+# test the new style interface
+# -----------------------------------------------
+
+my $visitor = Tree::Simple::Visitor->new();
+isa_ok($visitor, 'Tree::Simple::Visitor');
+
+my $tree = Tree::Simple->new(Tree::Simple->ROOT)
+					   ->addChildren(
+							Tree::Simple->new("1")
+                                        ->addChildren(
+                                            Tree::Simple->new("1.1"),
+                                            Tree::Simple->new("1.2")
+                                                        ->addChild(Tree::Simple->new("1.2.1")),
+                                            Tree::Simple->new("1.3")                                            
+                                        ),
+							Tree::Simple->new("2"),
+							Tree::Simple->new("3"),							
+					   );
+isa_ok($tree, 'Tree::Simple');
+
+$tree->accept($visitor);
+
+can_ok($visitor, 'getResults');
+is_deeply(
+        [ $visitor->getResults() ],
+        [ qw(1 1.1 1.2 1.2.1 1.3 2 3)],
+        '... got what we expected');
+
+can_ok($visitor, 'setNodeFilter');
+
+my $node_filter = sub { return "_" . $_[0]->getNodeValue() };
+$visitor->setNodeFilter($node_filter);
+
+can_ok($visitor, 'getNodeFilter');
+is($visitor->getNodeFilter(), "$node_filter", '... got back what we put in');
+
+# visit the tree again to get new results now
+$tree->accept($visitor);
+
+is_deeply(
+        scalar $visitor->getResults(),
+        [ qw(_1 _1.1 _1.2 _1.2.1 _1.3 _2 _3)],
+        '... got what we expected');
+        
+# test some exceptions
+
+throws_ok {
+    $visitor->setNodeFilter();        
+} qr/Insufficient Arguments/, '... this should die';
+
+throws_ok {
+    $visitor->setNodeFilter([]);        
+} qr/Insufficient Arguments/, '... this should die';
+
+# -----------------------------------------------
+# test the old style interface for backwards 
+# compatability
+# -----------------------------------------------
+
 # and that our RECURSIVE constant is properly defined
 can_ok("Tree::Simple::Visitor", 'RECURSIVE');
 # and that our CHILDREN_ONLY constant is properly defined
 can_ok("Tree::Simple::Visitor", 'CHILDREN_ONLY');
-
-# -----------------------------------------------
-# test the different depth arguements
-# -----------------------------------------------
 
 # no depth
 my $visitor1 = Tree::Simple::Visitor->new($SIMPLE_SUB);
@@ -50,7 +96,7 @@ my $visitor3 = Tree::Simple::Visitor->new($SIMPLE_SUB, Tree::Simple::Visitor->RE
 isa_ok($visitor3, 'Tree::Simple::Visitor');
 
 # -----------------------------------------------
-# test the exceptions
+# test constructor exceptions
 # -----------------------------------------------
 
 # we pass a bad depth (string)
@@ -63,24 +109,18 @@ throws_ok {
 throws_ok {
 	my $test = Tree::Simple::Visitor->new($SIMPLE_SUB, 100)
 } qr/Insufficient Arguments \: Depth arguement must be either RECURSIVE or CHILDREN_ONLY/, 
-   '... we are expecting this error';   
-
-# we pass a no func argument
-throws_ok {
-	my $test = Tree::Simple::Visitor->new();
-} qr/Insufficient Arguments \: func argument must be a subroutine reference/,
-   '... we are expecting this error';   
+   '... we are expecting this error';     
 
 # we pass a non-ref func argument
 throws_ok {
 	my $test = Tree::Simple::Visitor->new("Fail");
-} qr/Insufficient Arguments \: func argument must be a subroutine reference/,
+} qr/Insufficient Arguments \: filter function argument must be a subroutine reference/,
    '... we are expecting this error';
 
 # we pass a non-code-ref func arguement   
 throws_ok {
 	my $test = Tree::Simple::Visitor->new([]);
-} qr/Insufficient Arguments \: func argument must be a subroutine reference/,
+} qr/Insufficient Arguments \: filter function argument must be a subroutine reference/,
    '... we are expecting this error';   
 
 # -----------------------------------------------
@@ -128,29 +168,29 @@ throws_ok {
 # -----------------------------------------------
 
 # now make a tree
-my $tree = Tree::Simple->new(Tree::Simple->ROOT)
+my $tree1 = Tree::Simple->new(Tree::Simple->ROOT)
 					   ->addChildren(
 							Tree::Simple->new("1.0"),
 							Tree::Simple->new("2.0"),
 							Tree::Simple->new("3.0"),							
 					   );
-isa_ok($tree, 'Tree::Simple');
+isa_ok($tree1, 'Tree::Simple');
 
-cmp_ok($tree->getChildCount(), '==', 3, '... there are 3 children here');
+cmp_ok($tree1->getChildCount(), '==', 3, '... there are 3 children here');
 
 # and pass the visitor1 to accept
 lives_ok {
-	$tree->accept($visitor1);
+	$tree1->accept($visitor1);
 } '.. this passes fine';
 
 # and pass the visitor2 to accept
 lives_ok {
-	$tree->accept($visitor2);
+	$tree1->accept($visitor2);
 } '.. this passes fine';
 
 # and pass the visitor3 to accept
 lives_ok {
-	$tree->accept($visitor3);
+	$tree1->accept($visitor3);
 } '.. this passes fine';
 
 # -----------------------------------------------

@@ -2,17 +2,11 @@
 use strict;
 use warnings;
 
-use Test::More tests => 48;
+use Test::More tests => 49;
 use Test::Exception;
 
 ## ----------------------------------------------------------------------------
 ## Exception Tests for Tree::Simple
-## ----------------------------------------------------------------------------
-# Code coverage stats for this test:
-# -----------------------------------------------------------------------------
-# File                       stmt branch   cond    sub   time  total
-# ------------------------ ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm            53.9   48.9   58.3   75.8    2.1   57.9
 ## ----------------------------------------------------------------------------
 
 use Tree::Simple;
@@ -284,23 +278,32 @@ throws_ok {
 # passing no args to accept
 throws_ok {
 	$tree->accept();
-} qr/^Insufficient Arguments \: You must supply a valid Tree\:\:Simple\:\:Visitor object/, '... this should die';
+} qr/^Insufficient Arguments \: You must supply a valid Visitor object/, '... this should die';
 
 # passing non-ref arg to accept
 throws_ok {
 	$tree->accept("Fail");
-} qr/^Insufficient Arguments \: You must supply a valid Tree\:\:Simple\:\:Visitor object/, '... this should die';
+} qr/^Insufficient Arguments \: You must supply a valid Visitor object/, '... this should die';
 
 # passing non-object-ref arg to accept
 throws_ok {
 	$tree->accept([]);
-} qr/^Insufficient Arguments \: You must supply a valid Tree\:\:Simple\:\:Visitor object/, '... this should die';
-
+} qr/^Insufficient Arguments \: You must supply a valid Visitor object/, '... this should die';
 
 # passing non-Tree::Simple::Visitor arg to accept
 throws_ok {
 	$tree->accept($BAD_OBJECT);
-} qr/^Insufficient Arguments \: You must supply a valid Tree\:\:Simple\:\:Visitor object/, '... this should die';
+} qr/^Insufficient Arguments \: You must supply a valid Visitor object/, '... this should die';
+
+{
+    package TestPackage;
+    sub visit {}
+}
+
+# passing non-Tree::Simple::Visitor arg to accept
+lives_ok {
+	$tree->accept(bless({}, "TestPackage"));
+} '... but, this should live';
 
 # -----------------------------------------------
 # exceptions for _setParent

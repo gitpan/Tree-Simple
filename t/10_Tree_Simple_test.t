@@ -11,17 +11,11 @@ BEGIN {
 ## ----------------------------------------------------------------------------
 ## Test for Tree::Simple
 ## ----------------------------------------------------------------------------
-# Code coverage stats for this test:
-# -----------------------------------------------------------------------------
-# File                              stmt branch   cond    sub   time  total
-# ------------------------------- ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm                   89.1   59.3   26.7   93.9    9.6   74.7
-## ----------------------------------------------------------------------------
 # NOTE:
 # This test checks the base functionality of the Tree::Simple object. The test
 # is so large because (at the moment) each test relies upon the tree created 
 # by the previous tests. It is not the most efficient or sensible thing to do
-# i know, but its how it is for now. There are over 300 tests here, so 
+# i know, but its how it is for now. There are close to 300 tests here, so 
 # splitting them up would be a chore. 
 ## ----------------------------------------------------------------------------
 

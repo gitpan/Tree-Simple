@@ -1,5 +1,14 @@
 Revision history for Perl extension Tree::Simple.
 	
+1.06 Mon July 6 2004
+    - Changed what the Tree::Simple accept method accepts
+        - added tests for this
+    - Completely Revised the Tree::Simple::Visitor object
+      so that it is a better base class. This coincides with
+      the release of the Tree::Simple::VisitorFactory collection
+      of Visitor objects.
+        - added tests for this
+    
 1.05 Sun June 6th 2004
     - Fixed some vagueness in the documentation as well 
       as made sure that the ROOT constant could be given

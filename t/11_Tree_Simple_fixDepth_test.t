@@ -7,12 +7,6 @@ use Test::More tests => 39;
 ## ----------------------------------------------------------------------------
 ## fixDepth Tests for Tree::Simple
 ## ----------------------------------------------------------------------------
-# Code coverage stats for this test:
-# -----------------------------------------------------------------------------
-# File                              stmt branch   cond    sub   time  total
-# ------------------------------- ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm                   41.2   14.9   13.3   57.1  100.0   31.9
-## ----------------------------------------------------------------------------
 # NOTE:
 # This specifically tests the fixDepth function, which is run when a non-leaf
 # tree is added to a tree. It basically fixes the depth field so that it 
