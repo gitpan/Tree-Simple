@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 277;
+use Test::More tests => 283;
 
 BEGIN { 
 	use_ok('Tree::Simple'); 
@@ -15,7 +15,7 @@ BEGIN {
 # -----------------------------------------------------------------------------
 # File                              stmt branch   cond    sub   time  total
 # ------------------------------- ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm                   88.6   57.3   26.7   93.8   12.9   74.4
+# /Tree/Simple.pm                   89.1   59.3   26.7   93.9    9.6   74.7
 ## ----------------------------------------------------------------------------
 # NOTE:
 # This test checks the base functionality of the Tree::Simple object. The test
@@ -91,6 +91,9 @@ cmp_ok($tree->getChildCount(), '==', 0, '... we have no children yet');
 # check the depth
 cmp_ok($tree->getDepth(), '==', -1, '... we have no depth yet');
 
+# check the index
+cmp_ok($tree->getIndex(), '==', -1, '... root trees have no index');
+
 ## ----------------------------------------------------------------------------
 ## testing adding children
 ## ----------------------------------------------------------------------------
@@ -123,6 +126,9 @@ ok(!$sub_tree->isRoot());
 
 # check the depth of the sub_tree
 cmp_ok($sub_tree->getDepth(), '==', 0, '... depth should be 0 now');
+
+# check the index
+cmp_ok($sub_tree->getIndex(), '==', 0, '... index should be 0 now');
 
 # check the child count, 
 # it should be one now
@@ -173,6 +179,9 @@ ok(!$sub_tree_2->isRoot());
 # check the depth of the sub_tree
 cmp_ok($sub_tree_2->getDepth(), '==', 0, '... depth should be 0 now');
 
+# check the index
+cmp_ok($sub_tree_2->getIndex(), '==', 1, '... index should be 1');
+
 # make sure that we now have 2 children in our root	
 cmp_ok($tree->getChildCount(), '==', 2, '... we should have 2 children now');	
 
@@ -205,6 +214,9 @@ ok(!$sub_tree_4->isRoot());
 
 # check the depth of the sub_tree
 cmp_ok($sub_tree_4->getDepth(), '==', 0, '... depth should be 0 now');
+
+# check the index
+cmp_ok($sub_tree_4->getIndex(), '==', 2, '... index should be 2 now');
 
 # but since it has no children
 # it is also a leaf node
@@ -250,6 +262,12 @@ ok(!$sub_tree_3->isRoot());
 
 # check the depth of the sub_tree
 cmp_ok($sub_tree_3->getDepth(), '==', 0, '... depth should be 0 now');
+
+# check the index of 3
+cmp_ok($sub_tree_3->getIndex(), '==', 2, '... index should be 2 now');
+
+# check the index of 4 now
+cmp_ok($sub_tree_4->getIndex(), '==', 3, '... index should be 3 now');
 
 # make sure that we now have 3 children in our root	
 cmp_ok($tree->getChildCount(), '==', 4, '... we should have 4 children now');

@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -37,7 +37,10 @@ sub _init {
 	$self->{_node} = $node;
 	# and set the value of _children
 	$self->{_children} = $children;	
-	# Now check our parent value
+    # initialize the parent and depth here
+    $self->{_parent} = undef;
+    $self->{_depth} = undef;    
+	# Now check our $parent value
 	if (defined($parent)) {
 		# and set it as our parent
 		$parent->addChild($self);
@@ -186,6 +189,16 @@ sub removeChild {
         $index++;
     }
     die "Child Not Found : cannot find object ($child_to_remove) in self";
+}
+
+sub getIndex {
+    my ($self) = @_;
+    return -1 if $self->{_parent} eq ROOT;
+    my $index = 0;
+    foreach my $sibling ($self->{_parent}->getAllChildren()) {
+        ("$sibling" eq "$self") && return $index;
+        $index++;
+    }
 }
 
 ## ----------------------------------------------
@@ -630,6 +643,10 @@ Returns the invocant's parent, which could be either B<ROOT> or a B<Tree::Simple
 
 Returns the number of children the invocant contains.
 
+=item B<getIndex>
+
+Returns the index of this tree within its parent's child list. Returns -1 if the tree is the root.
+
 =back
 
 =head2 Predicates
@@ -702,17 +719,16 @@ I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Deve
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
  File                                  stmt branch   cond    sub    pod   time  total
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
- /Tree/Simple.pm                      100.0   98.8   86.7  100.0   96.0   11.6   97.7
- /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    0.2   97.3
+ /Tree/Simple.pm                      100.0   98.8   86.7  100.0   92.3    5.4   97.5
+ /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    0.1   97.3
  t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0    n/a   70.5  100.0
  t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a    n/a    5.3  100.0
  t/12_Tree_Simple_exceptions_test.t   100.0    n/a    n/a  100.0    n/a    5.8  100.0
  t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0    n/a    3.9  100.0
  t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0    n/a    2.6  100.0
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------ 
- Total                                100.0   98.9   87.7  100.0   96.3  100.0   99.1
+ Total                                100.0   99.0   87.7  100.0   92.9  100.0   99.1
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
- 
 
 =head1 OTHER TREE MODULES
 

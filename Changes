@@ -1,5 +1,23 @@
 Revision history for Perl extension Tree::Simple.
-	  
+	
+1.03 Sun May 9 2004
+    - I have added a new method 'getIndex', which will 
+      fetch the index of the current tree within it's 
+      parent's child list. I have also added documentation
+      and tests for this.
+    
+1.02 Sun May 2 2004
+    - I thought about the API change, and I decided that 
+      the new method (removeChildAt($index)) did not make 
+      sense. It made more sense for removeChild to accept
+      both $child and an $index, and do the right thing 
+      based upon which one was given. This of course
+      is how it works anyway since I maintained backwards
+      compatability. But take note, removeChildAt($index)
+      will not be supported. The method is still there, 
+      but it will very soon go away. 
+      I think this is a cleaner way to do this in the end.
+          
 1.01 Wed April 28 2004
     - Made API change:
         - removeChild($index) is not removeChildAt($index)
