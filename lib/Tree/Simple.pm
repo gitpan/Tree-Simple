@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.10';
+our $VERSION = '1.11';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -860,7 +860,7 @@ I have written a number of other modules which use or augment this module, they 
 
 =item B<Tree::Simple::View> - A set of classes for viewing Tree::Simple hierarchies in various output formats.
 
-=item B<Tree::Simple::VisitorFactory> - A set of useful Visitor objects for Tree::Simple objects.
+=item B<Tree::Simple::VisitorFactory> - A set of several useful Visitor objects for Tree::Simple objects.
 
 =back
 
@@ -880,15 +880,21 @@ I have also recently stumbled upon some packaged distributions of Tree::Simple f
 
 =head1 OTHER TREE MODULES
 
-There are a few other Tree modules out there, here is a quick comparison between B<Tree::Simple> and them. Obviously I am biased, so take what I say with a grain of salt, and keep in mind, I wrote B<Tree::Simple> because I could not find a Tree module that suited my needs. If B<Tree::Simple> does not fit your needs, I recommend looking at these modules. Please note that I only list registered Tree::* modules here, I have only seen a few other modules outside of that namespace that seem to fit, although most of them are part of another distribution (B<HTML::Tree>, B<Pod::Tree>, etc). 
+There are a few other Tree modules out there, here is a quick comparison between B<Tree::Simple> and them. Obviously I am biased, so take what I say with a grain of salt, and keep in mind, I wrote B<Tree::Simple> because I could not find a Tree module that suited my needs. If B<Tree::Simple> does not fit your needs, I recommend looking at these modules. Please note that I am only listing Tree::* modules I am familiar with here, if you think I have missed a module, please let me know. I have also seen a few tree-ish modules outside of the Tree::* namespace, but most of them are part of another distribution (B<HTML::Tree>, B<Pod::Tree>, etc) and are likely specialized in purpose. 
 
 =over 4
 
 =item B<Tree::DAG_Node>
 
-This module seems pretty stable and very robust, but it is also very large module. It is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. B<Tree::Simple>, by comparison, is around 500 lines of code and another 330 lines of documentation. B<Tree::DAG_Node> is part of the reason why I wrote B<Tree::Simple>, the author contends that you can use B<Tree::DAG_Node> for simpler purposes if you so desire, for me it is too beefy. 
+This module seems pretty stable and very robust with a lot of functionality. However, B<Tree::DAG_Node> does not come with any automated tests. It's I<test.pl> file simply checks the module loads and nothing else. While I am sure the author tested his code, I would feel better if I was able to see that. The module is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. But given that it is a well known fact that the likeliness of bugs increases along side the size of the code, I do not feel comfortable with large modules with no tests.
 
-My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is.
+All this said, I am not a huge fan of the API either, I prefer the gender neutral approach in B<Tree::Simple> to the mother/daughter style of B<Tree::DAG_Node>. I also feel very strongly that B<Tree::DAG_Node> is trying to do much more than makes sense in a single module, and is offering too many ways to do the same or similar things. 
+
+However, of all the Tree::* modules out there, B<Tree::DAG_Node> seems to be one of the favorites, so it may be worth investigating.
+
+=item B<Tree::MultiNode>
+
+I am not very familiar with this module, however, I have heard some good reviews of it, so I thought it deserved mention here. I believe it is based upon C++ code found in the book I<Algorithms in C++> by Robert Sedgwick. It uses a number of interesting ideas, such as a ::Handle object to traverse the tree with (similar to Visitors, but also seem to be to be kind of like a cursor). However, like B<Tree::DAG_Node>, it is somewhat lacking in tests and has only 6 tests in its suite. It also has one glaring bug, which is that there is currently no way to remove a child node.
 
 =item B<Tree::Nary>
 
@@ -898,7 +904,7 @@ This module is similar in intent to B<Tree::Simple>. It implements a tree with I
 
 =item B<Tree>
 
-This module is pretty old, it has not been updated since Oct. 31, 1999 and is still on version 0.01. It also seems to be (from the limited documentation) a balanced tree, B<Tree::Simple> makes no attempt to balance anything.
+This module is pretty old, it has not been updated since Oct. 31, 1999 and is still on version 0.01. It also seems to be (from the limited documentation) a binary and a balanced binary tree, B<Tree::Simple> is an I<n>-ary tree, and makes no attempt to balance anything.
 
 =item B<Tree::Ternary>
 
@@ -930,7 +936,7 @@ Is a wrapper around a C library, again B<Tree::Simple> is pure-perl. The author 
 
 =item Thanks to Brett Nuske for his idea for the C<getUID> and C<setUID> methods.
 
-=item Thanks to whoever submitted the memory leak bug to RT (#7512). 
+=item Thanks to whomever submitted the memory leak bug to RT (#7512). 
 
 =back
 

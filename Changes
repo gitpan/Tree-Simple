@@ -1,5 +1,8 @@
 Revision history for Perl extension Tree::Simple.
 
+1.11 Mon Oct 4 2004
+    - some documentation changes, no code changes
+
 1.10 Tues Aug 31 2004
     - streamlined the DESTROY method to avoid method
       calls as this can sometimes cause issues during 
