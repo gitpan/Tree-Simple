@@ -6,5 +6,6 @@ WriteMakefile(
     'VERSION_FROM'	=> 'lib/Tree/Simple.pm',  
     'PREREQ_PM'		=> {
 		'Test::More'      => .47,
+		'Test::Exception' => .15
 		}
 );

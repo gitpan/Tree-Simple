@@ -2,8 +2,6 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
-
 use Test::More 'no_plan';
 
 BEGIN { 
@@ -30,26 +28,60 @@ can_ok("Tree::Simple", 'ROOT');
 my $tree = Tree::Simple->new(Tree::Simple->ROOT);
 isa_ok($tree, 'Tree::Simple');
 
-# verfiy that it is a root
+# test the interface
+
+can_ok($tree, '_init');
+can_ok($tree, '_setParent');
+
 can_ok($tree, 'isRoot');
+can_ok($tree, 'isLeaf');
+
+can_ok($tree, 'setNodeValue');
+can_ok($tree, 'getNodeValue');
+
+can_ok($tree, 'getDepth');
+can_ok($tree, 'fixDepth');
+can_ok($tree, 'getParent');
+
+can_ok($tree, 'getChildCount');
+
+can_ok($tree, 'addChild');
+can_ok($tree, 'addChildren');
+can_ok($tree, 'insertChild');
+can_ok($tree, 'insertChildren');
+can_ok($tree, 'removeChild');
+can_ok($tree, 'getChild');
+can_ok($tree, 'getAllChildren');
+
+can_ok($tree, 'addSibling');
+can_ok($tree, 'addSiblings');
+can_ok($tree, 'insertSibling');
+can_ok($tree, 'insertSiblings');
+can_ok($tree, 'getSibling');
+can_ok($tree, 'getAllSiblings');
+
+can_ok($tree, 'traverse');
+can_ok($tree, 'accept');
+can_ok($tree, 'clone');
+can_ok($tree, 'cloneShallow');
+
+can_ok($tree, 'DESTROY');
+
+# verfiy that it is a root
 ok($tree->isRoot());
 
 # and since it has no children
 # it is also a leaf node
-can_ok($tree, 'isLeaf');
 ok($tree->isLeaf());
 
 # check the value of the node,
 # it should be root
-can_ok($tree, 'getNodeValue');
 is($tree->getNodeValue(), Tree::Simple->ROOT, '... this tree is a root');
 
 # we have no children yet
-can_ok($tree, 'getChildCount');
 cmp_ok($tree->getChildCount(), '==', 0, '... we have no children yet');
 
 # check the depth
-can_ok($tree, 'getDepth');
 cmp_ok($tree->getDepth(), '==', -1, '... we have no depth yet');
 
 ## ----------------------------------------------------------------------------
@@ -61,21 +93,17 @@ my $sub_tree = Tree::Simple->new("1.0");
 isa_ok($sub_tree, 'Tree::Simple');
 
 # check the node value
-can_ok($sub_tree, 'getNodeValue');
 is($sub_tree->getNodeValue(), "1.0", '... this tree is 1.0');
 
 # since we have not assigned a parent it 
 # will still be considered a root
-can_ok($sub_tree, 'isRoot');
 ok($sub_tree->isRoot());
 
 # and since it has no children
 # it is also a leaf node
-can_ok($sub_tree, 'isLeaf');
 ok($sub_tree->isLeaf());	
 
 # now add the child to our root
-can_ok($tree, 'addChild');
 $tree->addChild($sub_tree);
 
 # tree is no longer a leaf node
@@ -87,7 +115,6 @@ ok(!$tree->isLeaf());
 ok(!$sub_tree->isRoot());
 
 # check the depth of the sub_tree
-can_ok($sub_tree, 'getDepth');
 cmp_ok($sub_tree->getDepth(), '==', 0, '... depth should be 0 now');
 
 # check the child count, 
@@ -97,11 +124,9 @@ cmp_ok($tree->getChildCount(), '==', 1, '... we should have 1 children now');
 # get the child we inserted
 # and compare it with sub_tree
 # they should be the same
-can_ok($tree, 'getChild');
 is($tree->getChild(0), $sub_tree, '... make sure our sub_tree is fetchable');
 
 # get the parent of sub_tree
-can_ok($sub_tree, 'getParent');
 my $sub_tree_parent = $sub_tree->getParent();
 
 # now test that the parent of
@@ -118,23 +143,19 @@ my $sub_tree_2 = Tree::Simple->new("2.0");
 isa_ok($sub_tree_2, 'Tree::Simple');
 
 # check its node value
-can_ok($sub_tree_2, 'getNodeValue');
 is($sub_tree_2->getNodeValue(), "2.0", '... this tree is 2.0');
 
 # since we have not assigned a parent to 
 # the new sub_tree it will still be
 # considered a root
-can_ok($sub_tree_2, 'isRoot');
 ok($sub_tree_2->isRoot());
 
 # and since it has no children
 # it is also a leaf node
-can_ok($sub_tree_2, 'isLeaf');
 ok($sub_tree_2->isLeaf());
 
 # add our new subtree as a sibling
 # of our first sub_tree
-can_ok($sub_tree, 'addSibling');
 $sub_tree->addSibling($sub_tree_2);
 
 # now that we have assigned a parent to
@@ -143,7 +164,6 @@ $sub_tree->addSibling($sub_tree_2);
 ok(!$sub_tree_2->isRoot());
 
 # check the depth of the sub_tree
-can_ok($sub_tree_2, 'getDepth');
 cmp_ok($sub_tree_2->getDepth(), '==', 0, '... depth should be 0 now');
 
 # make sure that we now have 2 children in our root	
@@ -154,7 +174,6 @@ cmp_ok($tree->getChildCount(), '==', 2, '... we should have 2 children now');
 is($tree->getChild(1), $sub_tree_2, '... make sure our sub_tree is fetchable');	
 	
 # get the parent of our second sub_tree
-can_ok($sub_tree_2, 'getParent');
 my $sub_tree_2_parent = $sub_tree_2->getParent();
 
 # and make sure that it is the 
@@ -170,22 +189,18 @@ is($tree, $sub_tree_2_parent, '... make sure our sub_tree_2 parent is tree');
 my $sub_tree_4 = Tree::Simple->new("4.0", $tree); 	
 
 # check its node value
-can_ok($sub_tree_4, 'getNodeValue');
 is($sub_tree_4->getNodeValue(), "4.0", '... this tree is 4.0');
 
 # since we have assigned a parent to
 # the new sub_tree, it will no longer be 
 # considered a root
-can_ok($sub_tree_4, 'isRoot');
 ok(!$sub_tree_4->isRoot());
 
 # check the depth of the sub_tree
-can_ok($sub_tree_4, 'getDepth');
 cmp_ok($sub_tree_4->getDepth(), '==', 0, '... depth should be 0 now');
 
 # but since it has no children
 # it is also a leaf node
-can_ok($sub_tree_4, 'isLeaf');
 ok($sub_tree_4->isLeaf());
 
 # make sure that we now have 3 children in our root	
@@ -197,7 +212,6 @@ is($tree->getChild(2), $sub_tree_4, '... make sure our sub_tree is fetchable');
 
 # and make sure that the new sub-trees
 # parent is the same as our root
-can_ok($sub_tree_4, 'getParent');
 is($tree, $sub_tree_4->getParent(), '... make sure our sub_tree_4 parent is tree');
 
 ## ----------------------------------------------------------------------------
@@ -208,22 +222,18 @@ is($tree, $sub_tree_4->getParent(), '... make sure our sub_tree_4 parent is tree
 my $sub_tree_3 = Tree::Simple->new("3.0"); 	
 
 # check its node value
-can_ok($sub_tree_3, 'getNodeValue');
 is($sub_tree_3->getNodeValue(), "3.0", '... this tree is 3.0');
 
 # since we have not assigned a parent to 
 # the new sub_tree it will still be
 # considered a root
-can_ok($sub_tree_3, 'isRoot');
 ok($sub_tree_3->isRoot());
 
 # but since it has no children
 # it is also a leaf node
-can_ok($sub_tree_3, 'isLeaf');
 ok($sub_tree_3->isLeaf());
 
 # now insert the child at index 2
-can_ok($tree, 'insertChild');
 $tree->insertChild(2, $sub_tree_3);
 
 # since we now have assigned a parent to
@@ -232,7 +242,6 @@ $tree->insertChild(2, $sub_tree_3);
 ok(!$sub_tree_3->isRoot());
 
 # check the depth of the sub_tree
-can_ok($sub_tree_3, 'getDepth');
 cmp_ok($sub_tree_3->getDepth(), '==', 0, '... depth should be 0 now');
 
 # make sure that we now have 3 children in our root	
@@ -249,14 +258,11 @@ is($tree->getChild(3), $sub_tree_4, '... make sure our sub_tree is fetchable');
 
 # and make sure that the new sub-trees
 # parent is the same as our root
-can_ok($sub_tree_3, 'getParent');
 is($tree, $sub_tree_3->getParent(), '... make sure our sub_tree_3 parent is tree');	
 
 ## ----------------------------------------------------------------------------
 ## test getting all children and siblings
 ## ----------------------------------------------------------------------------	
-
-can_ok($tree, 'getAllChildren');
 
 # get it in scalar context and
 # check that our arrays are equal
@@ -275,7 +281,6 @@ ok eq_array($children, \@children);
 # now check that the siblings of all the 
 # sub_trees are the same as the children
 foreach my $_sub_tree (@children) {
-	can_ok($_sub_tree, 'getAllSiblings');
 	# test siblings in scalar context
 	my $siblings = $sub_tree->getAllSiblings();
 	ok eq_array($children, $siblings);
@@ -297,36 +302,29 @@ my @sub_children = (
 # now go through the children and test them
 foreach my $sub_child (@sub_children) {
 	# they should think they are root
-	can_ok($sub_child, 'isRoot');
 	ok($sub_child->isRoot());
 
 	# and they should all be leaves
-	can_ok($sub_child, 'isLeaf');
 	ok($sub_child->isLeaf());
 
 	# and their node values
-	can_ok($sub_child, 'getNodeValue');
 	like($sub_child->getNodeValue(), qr/1\.[0-9]/, '... they at least have "1." followed by a digit');
 	
 	# and they should all have a depth of -1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', -1, '... depth should be -1');	
 }
 
 # check to see if we can add children
-can_ok($sub_tree, 'addChildren');
 $sub_tree->addChildren(@sub_children);
 
 # we are no longer a leaf node now
 ok(!$sub_tree->isLeaf());
 
 # make sure that we now have 3 children now	
-can_ok($sub_tree, 'getChildCount');
 cmp_ok($sub_tree->getChildCount(), '==', 3, '... we should have 3 children now');
 
 # now check that sub_tree's children 
 # are the same as our list
-can_ok($sub_tree, 'getAllChildren');
 ok eq_array([ $sub_tree->getAllChildren() ], \@sub_children);
 
 # now go through the children again
@@ -341,16 +339,13 @@ foreach my $sub_child (@sub_children) {
 	ok($sub_child->isLeaf());
 	
 	# now we test their parental relationship
-	can_ok($sub_child, 'getParent');
 	is($sub_tree, $sub_child->getParent(), '... their parent is the sub_tree');
 	
 	# and they should all have a depth of 1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', 1, '... depth should be 1');
 	
 	# now check that its siblings are the same 
-	# as the children of its parent
-	can_ok($sub_child, 'getAllSiblings');				
+	# as the children of its parent			
 	ok eq_array([ $sub_tree->getAllChildren() ], [ $sub_child->getAllSiblings() ]);
 }
 
@@ -367,24 +362,19 @@ my @more_sub_children = (
 # now go through the children and test them
 foreach my $sub_child (@more_sub_children) {
 	# they should think they are root
-	can_ok($sub_child, 'isRoot');
 	ok($sub_child->isRoot());
 
 	# and they should all be leaves
-	can_ok($sub_child, 'isLeaf');
 	ok($sub_child->isLeaf());
 
 	# and their node values
-	can_ok($sub_child, 'getNodeValue');
 	like($sub_child->getNodeValue(), qr/1\.[0-9]/, '... they at least have "1." followed by a digit');
 	
 	# and they should all have a depth of -1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', -1, '... depth should be -1');	
 }
 
 # check to see if we can insert children
-can_ok($sub_tree, 'insertChildren');
 $sub_tree->insertChildren(1, @more_sub_children);
 
 # make sure that we now have 6 children now	
@@ -406,16 +396,13 @@ foreach my $sub_child (@more_sub_children) {
 	ok($sub_child->isLeaf());
 	
 	# now we test their parental relationship
-	can_ok($sub_child, 'getParent');
 	is($sub_tree, $sub_child->getParent(), '... their parent is the sub_tree');
 	
 	# and they should all have a depth of 1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', 1, '... depth should be 1');
 	
 	# now check that its siblings are the same 
 	# as the children of its parent
-	can_ok($sub_child, 'getAllSiblings');				
 	ok eq_array([ $sub_tree->getAllChildren() ], [ $sub_child->getAllSiblings() ]);
 }
 
@@ -431,24 +418,19 @@ my @more_children = (
 # now go through the children and test them
 foreach my $sub_child (@more_children) {
 	# they should think they are root
-	can_ok($sub_child, 'isRoot');
 	ok($sub_child->isRoot());
 
 	# and they should all be leaves
-	can_ok($sub_child, 'isLeaf');
 	ok($sub_child->isLeaf());
 
 	# and their node values
-	can_ok($sub_child, 'getNodeValue');
 	like($sub_child->getNodeValue(), qr/[0-9]\.0/, '... they at least have digit followed by ".0"');
 	
 	# and they should all have a depth of -1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', -1, '... depth should be -1');	
 }
 
 # check to see if we can insert children
-can_ok($sub_tree, 'addSiblings');
 $sub_tree->addSiblings(@more_children);
 
 # make sure that we now have 6 children now	
@@ -471,16 +453,13 @@ foreach my $sub_child (@more_children) {
 	ok($sub_child->isLeaf());
 	
 	# now we test their parental relationship
-	can_ok($sub_child, 'getParent');
 	is($tree, $sub_child->getParent(), '... their parent is the tree');
 	
 	# and they should all have a depth of 1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', 0, '... depth should be 0');
 	
 	# now check that its siblings are the same 
-	# as the children of its parent
-	can_ok($sub_child, 'getAllSiblings');				
+	# as the children of its parent			
 	ok eq_array([ $tree->getAllChildren() ], [ $sub_child->getAllSiblings() ]);
 }
 
@@ -491,23 +470,18 @@ foreach my $sub_child (@more_children) {
 my $new_sibling = Tree::Simple->new("8.0"); 
 
 # they should think they are root
-can_ok($new_sibling, 'isRoot');
 ok($new_sibling->isRoot());
 
 # and they should all be leaves
-can_ok($new_sibling, 'isLeaf');
 ok($new_sibling->isLeaf());
 
 # and their node values
-can_ok($new_sibling, 'getNodeValue');
 is($new_sibling->getNodeValue(), "8.0", '... node value should be 6.0');
 
 # and they should all have a depth of -1
-can_ok($new_sibling, 'getDepth');
 cmp_ok($new_sibling->getDepth(), '==', -1, '... depth should be -1');	
 
 # check to see if we can insert children
-can_ok($sub_tree, 'insertSibling');
 $sub_tree->insertSibling(5, $new_sibling);
 
 # make sure that we now have 6 children now	
@@ -530,15 +504,13 @@ ok(!$new_sibling->isRoot());
 ok($new_sibling->isLeaf());
 
 # now we test their parental relationship
-can_ok($new_sibling, 'getParent');
 is($tree, $new_sibling->getParent(), '... their parent is the tree');
 
 # and they should all have a depth of 1
 cmp_ok($new_sibling->getDepth(), '==', 0, '... depth should be 0');
 	
 # now check that its siblings are the same 
-# as the children of its parent
-can_ok($new_sibling, 'getAllSiblings');				
+# as the children of its parent			
 ok eq_array([ $tree->getAllChildren() ], [ $new_sibling->getAllSiblings() ]);
 
 ## ----------------------------------------------------------------------------
@@ -553,24 +525,19 @@ my @even_more_children = (
 # now go through the children and test them
 foreach my $sub_child (@even_more_children) {
 	# they should think they are root
-	can_ok($sub_child, 'isRoot');
 	ok($sub_child->isRoot());
 
 	# and they should all be leaves
-	can_ok($sub_child, 'isLeaf');
 	ok($sub_child->isLeaf());
 
 	# and their node values
-	can_ok($sub_child, 'getNodeValue');
 	like($sub_child->getNodeValue(), qr/[0-9]\.0/, '... they at least have digit followed by ".0"');
 	
 	# and they should all have a depth of -1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', -1, '... depth should be -1');	
 }
 
 # check to see if we can insert children
-can_ok($sub_tree, 'insertSiblings');
 $sub_tree->insertSiblings(5, @even_more_children);
 
 # make sure that we now have 6 children now	
@@ -596,16 +563,13 @@ foreach my $sub_child (@even_more_children) {
 	ok($sub_child->isLeaf());
 	
 	# now we test their parental relationship
-	can_ok($sub_child, 'getParent');
 	is($tree, $sub_child->getParent(), '... their parent is the tree');
 	
 	# and they should all have a depth of 1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', 0, '... depth should be 0');
 	
 	# now check that its siblings are the same 
-	# as the children of its parent
-	can_ok($sub_child, 'getAllSiblings');				
+	# as the children of its parent			
 	ok eq_array([ $tree->getAllChildren() ], [ $sub_child->getAllSiblings() ]);
 }
 
@@ -633,22 +597,18 @@ my $self_ref_tree_test = Tree::Simple->new("3.1", $sub_tree_3)
 isa_ok($self_ref_tree_test, 'Tree::Simple');
 
 # it shouldnt be a root
-can_ok($self_ref_tree_test, 'isRoot');
 ok(!$self_ref_tree_test->isRoot());
 
 # and it shouldnt be a leaf
-can_ok($self_ref_tree_test, 'isLeaf');
 ok(!$self_ref_tree_test->isLeaf());
 
 # make sure that the parent in the constructor worked
-can_ok($self_ref_tree_test, 'getParent');
 is($sub_tree_3, $self_ref_tree_test->getParent(), '... should be the same');
 
 # and the parents count should be 1
 cmp_ok($sub_tree_3->getChildCount(), '==', 1, '... we should have 1 child here');
 
 # make sure they show up in the count test
-can_ok($self_ref_tree_test, 'getChildCount');
 cmp_ok($self_ref_tree_test->getChildCount(), '==', 2, '... we should have 2 children here');
 
 foreach my $sub_child ($self_ref_tree_test->getAllChildren()) {
@@ -661,16 +621,13 @@ foreach my $sub_child ($self_ref_tree_test->getAllChildren()) {
 	ok($sub_child->isLeaf());
 	
 	# now we test their parental relationship
-	can_ok($sub_child, 'getParent');
 	is($self_ref_tree_test, $sub_child->getParent(), '... their parent is the tree');
 	
 	# and they should all have a depth of 1
-	can_ok($sub_child, 'getDepth');
 	cmp_ok($sub_child->getDepth(), '==', 2, '... depth should be 0');
 	
 	# now check that its siblings are the same 
-	# as the children of its parent
-	can_ok($sub_child, 'getAllSiblings');				
+	# as the children of its parent			
 	ok eq_array([ $self_ref_tree_test->getAllChildren() ], [ $sub_child->getAllSiblings() ]);
 }
 
@@ -688,22 +645,18 @@ my $self_ref_tree_test_2 = Tree::Simple->new("2.1", $sub_tree_2)
 isa_ok($self_ref_tree_test_2, 'Tree::Simple');
 
 # it shouldnt be a root
-can_ok($self_ref_tree_test_2, 'isRoot');
 ok(!$self_ref_tree_test_2->isRoot());
 
 # and it shouldnt be a leaf
-can_ok($self_ref_tree_test_2, 'isLeaf');
 ok(!$self_ref_tree_test_2->isLeaf());
 
 # make sure that the parent in the constructor worked
-can_ok($self_ref_tree_test_2, 'getParent');
 is($sub_tree_2, $self_ref_tree_test_2->getParent(), '... should be the same');
 
 # and the parents count should be 1
 cmp_ok($sub_tree_2->getChildCount(), '==', 1, '... we should have 1 child here');
 
 # make sure they show up in the count test
-can_ok($self_ref_tree_test_2, 'getChildCount');
 cmp_ok($self_ref_tree_test_2->getChildCount(), '==', 1, '... we should have 1 child here');
 
 my $sub_child = $self_ref_tree_test_2->getChild(0);
@@ -717,32 +670,30 @@ ok(!$sub_child->isRoot());
 ok($sub_child->isLeaf());
 
 # now we test their parental relationship
-can_ok($sub_child, 'getParent');
 is($self_ref_tree_test_2, $sub_child->getParent(), '... their parent is the tree');
 
 # and they should all have a depth of 1
-can_ok($sub_child, 'getDepth');
 cmp_ok($sub_child->getDepth(), '==', 2, '... depth should be 0');
 
 # now check that its siblings are the same 
-# as the children of its parent
-can_ok($sub_child, 'getAllSiblings');				
+# as the children of its parent		
 ok eq_array([ $self_ref_tree_test_2->getAllChildren() ], [ $sub_child->getAllSiblings() ]);
 
 ## ----------------------------------------------------------------------------
 ## test removeChild
 ## ----------------------------------------------------------------------------	
 
+my $sub_tree_of_tree_to_remove = Tree::Simple->new("1.1.a.1");
 # make a node to remove
-my $tree_to_remove = Tree::Simple->new("1.1.a");
+my $tree_to_remove = Tree::Simple->new("1.1.a")->addChild($sub_tree_of_tree_to_remove);
 
 # test that its a root
-can_ok($tree_to_remove, 'isRoot');
 ok($tree_to_remove->isRoot());
 
 # and that its depth is -1
-can_ok($tree_to_remove, 'getDepth');
 cmp_ok($tree_to_remove->getDepth(), '==', -1, '... the depth should be -1'); 
+# and the sub-trees depth is 0
+cmp_ok($sub_tree_of_tree_to_remove->getDepth(), '==', 0, '... the depth should be 0'); 
 
 # insert it into the sub_tree
 $sub_tree->insertChild(1, $tree_to_remove);
@@ -752,6 +703,8 @@ ok(!$tree_to_remove->isRoot());
 
 # check thats its depth is now 1
 cmp_ok($tree_to_remove->getDepth(), '==', 1, '... the depth should be 1'); 
+# and the sub-trees depth is 2
+cmp_ok($sub_tree_of_tree_to_remove->getDepth(), '==', 2, '... the depth should be 2'); 
 
 # make sure it is there
 is($sub_tree->getChild(1), $tree_to_remove, '... these tree should be equal');		
@@ -766,7 +719,9 @@ is($removed_tree, $tree_to_remove, '... these tree should be equal');
 # it should think its a root again
 ok($tree_to_remove->isRoot());
 # and its depth should be back to -1
-cmp_ok($tree_to_remove->getDepth(), '==', -1, '... the depth should be -1'); 	
+cmp_ok($tree_to_remove->getDepth(), '==', -1, '... the depth should be -1'); 
+# and the sub-trees depth is 0
+cmp_ok($sub_tree_of_tree_to_remove->getDepth(), '==', 0, '... the depth should be 0'); 	
 
 ## ----------------------------------------------
 ## now test the edge cases

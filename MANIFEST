@@ -5,5 +5,7 @@ README
 lib/Tree/Simple.pm
 lib/Tree/Simple/Visitor.pm
 t/10_Tree_Simple_test.t
-t/15_Tree_Simple_more_tests.t
+t/11_Tree_Simple_fixDepth_test.t
+t/12_Tree_Simple_exceptions_test.t
+t/13_Tree_Simple_clone_test.t
 t/20_Tree_Simple_Visitor_test.t

@@ -1,10 +1,10 @@
 
 package Tree::Simple::Visitor;
 
-$VERSION = 0.01;
-
 use strict;
 use warnings;
+
+our $VERSION = '0.01';
  
 ## class constants
 
@@ -103,11 +103,13 @@ Gang Of Four Design Patterns Book. Specifically, the Visitor Pattern.
 
 =head1 AUTHOR
 
-stevan little, E<lt>stevan@iinteractive.com<gt>
+stevan little, E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2004 by stevan little
+Copyright 2004 by Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 

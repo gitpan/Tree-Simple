@@ -1,10 +1,10 @@
 
 package Tree::Simple;
 
-$VERSION = 0.01;
-
 use strict;
 use warnings;
+
+our $VERSION = '0.01';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -34,7 +34,7 @@ sub new {
 sub _init {
 	my ($self, $node, $parent, $children) = @_;
 	# set the value of the node
-	$self->{_node} = $node || undef;
+	$self->{_node} = $node;
 	# and set the value of _children
 	$self->{_children} = $children;	
 	# Now check our parent value
@@ -51,7 +51,7 @@ sub _init {
 sub _setParent {
 	my ($self, $parent) = @_;
 	(defined($parent) && 
-		($parent eq ROOT) || (ref($parent) && $parent->isa("Tree::Simple")))
+		(($parent eq ROOT) || (ref($parent) && $parent->isa("Tree::Simple"))))
 		|| die "Insufficient Arguments : parent also must be a Tree::Simple object";
 	$self->{_parent} = $parent;
 	if ($parent eq ROOT) {
@@ -96,12 +96,15 @@ sub insertChildren {
 		|| die "Insufficient Arguments : Cannot insert child without index";
 	# check the bounds of our children 
 	# against the index given
-	($index < $self->getChildCount()) 
+	($index <= $self->getChildCount()) 
 		|| die "Index Out of Bounds : got ($index) expected no more than (" . $self->getChildCount() . ")";
+	(@trees) 
+		|| die "Insufficient Arguments : no tree(s) to insert";	
 	foreach my $tree (@trees) {
 		(defined($tree) && ref($tree) && $tree->isa("Tree::Simple")) 
-			|| die " Insufficient Arguments : Child must be a Tree::Simple object";	
+			|| die "Insufficient Arguments : Child must be a Tree::Simple object";	
 		$tree->_setParent($self);
+		$tree->fixDepth() unless $tree->isLeaf();
 	}
 	# if index is zero, use this optimization
 	if ($index == 0) {
@@ -125,7 +128,9 @@ sub insertChildren {
 sub removeChild {
 	my ($self, $index) = @_;
 	(defined($index)) 
-		|| die "Insufficient Arguments : Cannot insert child without index.";
+		|| die "Insufficient Arguments : Cannot remove child without index.";
+	($self->getChildCount() != 0) 
+		|| die "Illegal Operation : There are no children to remove";		
 	# check the bounds of our children 
 	# against the index given		
 	($index < $self->getChildCount()) 
@@ -189,7 +194,7 @@ sub addSiblings {
 sub insertSiblings {
 	my ($self, @args) = @_;
 	(!$self->isRoot()) 
-		|| die "Insufficient Arguments : cannot add siblings to a ROOT tree";
+		|| die "Insufficient Arguments : cannot insert sibling(s) to a ROOT tree";
 	$self->{_parent}->insertChildren(@args);
 }
 
@@ -227,7 +232,7 @@ sub getChildCount {
 sub getChild {
 	my ($self, $index) = @_;
 	(defined($index)) 
-		|| die "Insufficient Arguments : Cannot get child without index.";
+		|| die "Insufficient Arguments : Cannot get child without index";
 	return $self->{_children}->[$index];
 }
 
@@ -301,7 +306,7 @@ sub fixDepth {
 
 sub traverse {
 	my ($self, $func) = @_;
-	(defined($func)) || die "Insufficient Arguments : Cannot traverse without traversal function.";
+	(defined($func)) || die "Insufficient Arguments : Cannot traverse without traversal function";
 	(ref($func) eq "CODE") || die "Incorrect Object Type : traversal function is not a function";
 	foreach my $child ($self->getAllChildren()) { 
 		$func->($child);
@@ -320,8 +325,8 @@ sub traverse {
 # its disposal. 
 sub accept {
 	my ($self, $visitor) = @_;
-	(defined($visitor) && ref($visitor) && $visitor->can("Tree::Simple::Visitor")) 
-		|| die "Insufficient Arguments : You must supply a valid Tree::Simple::Visitor object.";
+	(defined($visitor) && ref($visitor) && $visitor->isa("Tree::Simple::Visitor")) 
+		|| die "Insufficient Arguments : You must supply a valid Tree::Simple::Visitor object";
 	$visitor->visit($self);
 }
 
@@ -358,7 +363,8 @@ sub clone {
 	# if the current slot is a scalar reference, then
 	# dereference it and copy it into the new object
 	elsif (ref($temp_node) eq "SCALAR") {
-		$cloned_tree->{_node} = ${$temp_node};
+		my $temp_scalar = ${$temp_node};
+		$cloned_tree->{_node} = \$temp_scalar;
 	}
 	
 		## NOTE:
@@ -647,7 +653,7 @@ The clone method does a full deep-copy clone of the object, calling clone recurs
 
 =item cloneShallow
 
-Tthis method is an alternate option to the plain C<clone> method. This method allows the cloning of single B<Tree::Simple> object while retaining connections to the rest of the tree/heirarchy. This will attempt to call C<clone> on the invocant's node if the node is an object (and responds to C<$obj->can('clone')>) otherwise it will just copy it.
+This method is an alternate option to the plain C<clone> method. This method allows the cloning of single B<Tree::Simple> object while retaining connections to the rest of the tree/heirarchy. This will attempt to call C<clone> on the invocant's node if the node is an object (and responds to C<$obj->can('clone')>) otherwise it will just copy it.
 
 =item DESTROY
 
@@ -665,7 +671,9 @@ stevan little, E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2004 by Stevan Little
+Copyright 2004 by Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 
