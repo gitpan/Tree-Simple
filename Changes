@@ -1,5 +1,10 @@
 Revision history for Perl extension Tree::Simple.
 
+1.10 Tues Aug 31 2004
+    - streamlined the DESTROY method to avoid method
+      calls as this can sometimes cause issues during 
+      global destruction with subclasses.
+
 1.09 Tues Aug 31 2004
     - Fixed DESTROY to avoid memory leaks (RT-BUG: #7512) 
         - added documentation to explain when to call 

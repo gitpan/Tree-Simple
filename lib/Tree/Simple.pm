@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.09';
+our $VERSION = '1.10';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -512,12 +512,12 @@ sub DESTROY {
 	# (first checking if they are defined
 	# though since we never know how perl's
 	# garbage collector will work)    
-	unless (!$self->{_children} && $self->isLeaf()) {
+	unless (!$self->{_children} && scalar(@{$self->{_children}}) == 0) {
 		foreach my $child (@{$self->{_children}}) { 
 			defined $child && $child->DESTROY();
 		}
 	}
-    $self->{_parent} = undef unless $self->isRoot();
+    $self->{_parent} = undef;
 }
 
 ## ----------------------------------------------------------------------------
