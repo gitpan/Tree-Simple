@@ -27,3 +27,11 @@ Revision history for Perl extension Tree::Simple.
 	  Java-esque naming style, but hey whatta ya do). Most of this
 	  release is just tweaking and fine tuning of code, and updating
 	  of the documentation.
+	  
+0.15 Mon April 5 2004
+    - Made a few adjustments:
+	  - changed to UNIVERSAL::isa($object, "Class") so as to 
+	    avoid warnings if non-object refs are passed
+	- added more tests to the Tree::Simple::Visitor object
+	- added more tests to check for non-object-refs passed
+	  where they shouldnt be.

@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 36;
+use Test::More tests => 41;
 use Test::Exception;
 
 ## ----------------------------------------------------------------------------
@@ -10,9 +10,9 @@ use Test::Exception;
 ## ----------------------------------------------------------------------------
 # Code coverage stats for this test:
 # -----------------------------------------------------------------------------
-# File                              stmt branch   cond    sub   time  total
-# ------------------------------- ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm                   49.3   47.3   57.8   71.4  100.0   52.2
+# File                       stmt branch   cond    sub   time  total
+# ------------------------ ------ ------ ------ ------ ------ ------
+# /Tree/Simple.pm            49.3   47.3   57.8   71.4  100.0   55.5
 ## ----------------------------------------------------------------------------
 
 use Tree::Simple;
@@ -44,6 +44,12 @@ throws_ok {
 throws_ok {
 	$tree->addChild("fail");
 } qr/^Insufficient Arguments \: Child must be a Tree\:\:Simple object/, '... this should die';
+
+# giving an bad argument for addChild
+throws_ok {
+	$tree->addChild([]);
+} qr/^Insufficient Arguments \: Child must be a Tree\:\:Simple object/, '... this should die';
+
 
 # giving an bad object argument for addChild
 throws_ok {
@@ -78,6 +84,12 @@ throws_ok {
 throws_ok {
 	$tree->insertChild(0, "Fail");
 } qr/^Insufficient Arguments \: Child must be a Tree\:\:Simple object/, '... this should die';
+
+# giving an good index argument but a non-object-ref tree argument for insertChild
+throws_ok {
+	$tree->insertChild(0, []);
+} qr/^Insufficient Arguments \: Child must be a Tree\:\:Simple object/, '... this should die';
+
 
 # giving an good index argument but a bad object tree argument for insertChild
 throws_ok {
@@ -117,6 +129,12 @@ throws_ok {
 throws_ok {
 	$tree->insertChildren(0, "Fail");
 } qr/^Insufficient Arguments \: Child must be a Tree\:\:Simple object/, '... this should die';
+
+# giving an good index argument but a non-object-ref tree argument for insertChild
+throws_ok {
+	$tree->insertChildren(0, []);
+} qr/^Insufficient Arguments \: Child must be a Tree\:\:Simple object/, '... this should die';
+
 
 # giving an good index argument but a bad object tree argument for insertChild
 throws_ok {
@@ -228,6 +246,12 @@ throws_ok {
 	$tree->accept("Fail");
 } qr/^Insufficient Arguments \: You must supply a valid Tree\:\:Simple\:\:Visitor object/, '... this should die';
 
+# passing non-object-ref arg to accept
+throws_ok {
+	$tree->accept([]);
+} qr/^Insufficient Arguments \: You must supply a valid Tree\:\:Simple\:\:Visitor object/, '... this should die';
+
+
 # passing non-Tree::Simple::Visitor arg to accept
 throws_ok {
 	$tree->accept($BAD_OBJECT);
@@ -247,10 +271,15 @@ throws_ok {
 	$tree->_setParent("Test");
 } qr/^Insufficient Arguments/, '... this should croak';
 
+# if the parent that is given is a ref but not an object
+throws_ok {
+	$tree->_setParent([]);
+} qr/^Insufficient Arguments/, '... this should croak';
+
 # and if the parent that is given is an object but
 # is not a Tree::Simple object
 throws_ok {
-	$tree->_setParent(bless({}, "Test"));
+	$tree->_setParent($BAD_OBJECT);
 } qr/^Insufficient Arguments/, '... this should croak';
 
 ## ----------------------------------------------------------------------------
