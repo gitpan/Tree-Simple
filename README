@@ -1,4 +1,4 @@
-Tree/Simple version 1.0
+Tree/Simple version 1.01
 ========================
 
 See the module documentation for more information.
@@ -14,9 +14,8 @@ To install this module type the following:
 
 DEPENDENCIES
 
-This module requires these other modules and libraries:
-
-	None
+This module requires no other modules and libraries outside of the core
+for normal usage. However it uses Test::Exception in the test suite.
 
 COPYRIGHT AND LICENCE
 

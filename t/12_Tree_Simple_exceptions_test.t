@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 41;
+use Test::More tests => 45;
 use Test::Exception;
 
 ## ----------------------------------------------------------------------------
@@ -12,7 +12,7 @@ use Test::Exception;
 # -----------------------------------------------------------------------------
 # File                       stmt branch   cond    sub   time  total
 # ------------------------ ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm            49.3   47.3   57.8   71.4  100.0   55.5
+# /Tree/Simple.pm            55.1   50.0   57.8   78.1    2.3   59.3
 ## ----------------------------------------------------------------------------
 
 use Tree::Simple;
@@ -143,28 +143,52 @@ throws_ok {
 
 
 # -----------------------------------------------
+# exceptions for removeChildAt
+# -----------------------------------------------
+
+# giving no index argument for removeChildAt
+throws_ok {
+	$tree->removeChildAt();
+} qr/^Insufficient Arguments \: Cannot remove child without index/, '... this should die';
+
+# attempt to remove a child when there are none
+throws_ok {
+	$tree->removeChildAt(5);
+} qr/^Illegal Operation \: There are no children to remove/, '... this should die';
+
+# add a child now
+$tree->addChild($TEST_SUB_TREE);
+
+# giving no index argument for removeChildAt
+throws_ok {
+	$tree->removeChildAt(5);
+} qr/^Index Out of Bounds \: got \(5\) expected no more than \(1\)/, '... this should die';
+
+is($tree->removeChildAt(0), $TEST_SUB_TREE, '... these should be the same');
+
+# -----------------------------------------------
 # exceptions for removeChild
 # -----------------------------------------------
 
 # giving no index argument for removeChild
 throws_ok {
 	$tree->removeChild();
-} qr/^Insufficient Arguments \: Cannot remove child without index/, '... this should die';
+} qr/^Insufficient Arguments \: /, '... this should die';
 
-# attempt to remove a child when there are none
+# giving bad ref argument
 throws_ok {
-	$tree->removeChild(5);
-} qr/^Illegal Operation \: There are no children to remove/, '... this should die';
+	$tree->removeChild([]);
+} qr/^Insufficient Arguments \: /, '... this should die';
 
-# add a child now
-$tree->addChild($TEST_SUB_TREE);
-
-# giving no index argument for removeChild
+# giving bad object argument
 throws_ok {
-	$tree->removeChild(5);
-} qr/^Index Out of Bounds \: got \(5\) expected no more than \(1\)/, '... this should die';
+	$tree->removeChild($BAD_OBJECT);
+} qr/^Insufficient Arguments \: /, '... this should die';
 
-is($tree->removeChild(0), $TEST_SUB_TREE, '... these should be the same');
+# giving bad object argument
+throws_ok {
+	$tree->removeChild($TEST_SUB_TREE);
+} qr/^Child Not Found \: /, '... this should die';
 
 # -----------------------------------------------
 # exceptions for *Sibling methods

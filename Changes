@@ -1,5 +1,19 @@
 Revision history for Perl extension Tree::Simple.
 	  
+1.01 Wed April 28 2004
+    - Made API change:
+        - removeChild($index) is not removeChildAt($index)
+          and removeChild($child) has replaced it. See the
+          documentation for more info.
+        - backwards compatability maintained under change.
+        - new tests written to test the new code and to 
+          test the backwards compatability
+    - Test suite is not at 99% coverage (with 415 tests)
+    - Moved object initialization code from Tree::Simple::Visitor::new      
+      to Tree::Simple::Visitor::_init. This keeps in line with the
+      Tree::Simple code and the seperation of object creation and 
+      initialization.
+      
 1.0  Mon April 5 2004
     - I dont know why, but I was wary of calling this 1.0
 	  but that is really what it is. I think too many modules

@@ -4,7 +4,7 @@ package Tree::Simple::Visitor;
 use strict;
 use warnings;
 
-our $VERSION = '1.0';
+our $VERSION = '1.01';
  
 ## class constants
 
@@ -15,22 +15,29 @@ use constant CHILDREN_ONLY => 0x10;
 
 sub new {
 	my ($_class, $func, $depth) = @_;
+	my $class = ref($_class) || $_class;
+	my $visitor = {
+		func => undef,
+		depth => undef
+		};
+	bless($visitor, $class);
+	$visitor->_init($func, $depth);
+	return $visitor;
+}
+
+### methods
+
+sub _init {
+	my ($self, $func, $depth) = @_;
 	if (defined($depth)){
 		($depth =~ /\d+/ && ($depth == RECURSIVE || $depth == CHILDREN_ONLY)) 
 			|| die "Insufficient Arguments : Depth arguement must be either RECURSIVE or CHILDREN_ONLY";
 	}
 	(defined($func) && ref($func) eq "CODE") 
 		|| die "Insufficient Arguments : func argument must be a subroutine reference";
-	my $class = ref($_class) || $_class;
-	my $visitor = {
-		func => $func,
-		depth => $depth || 0
-		};
-	bless($visitor, $class);
-	return $visitor;
+	$self->{func} = $func;
+	$self->{depth} = $depth || 0;	
 }
-
-### methods
 
 # visit routine
 sub visit {

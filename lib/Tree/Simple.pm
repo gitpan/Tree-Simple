@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.0';
+our $VERSION = '1.01';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -125,7 +125,7 @@ sub insertChildren {
 # and array of one tree
 *insertChild = \&insertChildren;
 
-sub removeChild {
+sub removeChildAt {
 	my ($self, $index) = @_;
 	(defined($index)) 
 		|| die "Insufficient Arguments : Cannot remove child without index.";
@@ -166,6 +166,26 @@ sub removeChild {
 	# to properly dispose of this
 	# child (and all its sub-children)
 	return $removed_child;
+}
+
+sub removeChild {
+    my ($self, $child_to_remove) = @_;
+    (defined($child_to_remove))
+        || die "Insufficient Arguments : you must specify a child to remove";
+    # maintain backwards compatability
+    # so any non-ref arguments will get 
+    # sent to removeChildAt
+    return $self->removeChildAt($child_to_remove) unless ref($child_to_remove);
+    # now that we are confident its a reference
+    # make sure it is the right kind
+    (UNIVERSAL::isa($child_to_remove, "Tree::Simple")) 
+        || die "Insufficient Arguments : Only valid child type is a Tree::Simple object";
+    my $index = 0;
+    foreach my $child ($self->getAllChildren()) {
+        ("$child" eq "$child_to_remove") && return $self->removeChildAt($index);
+        $index++;
+    }
+    die "Child Not Found : cannot find object ($child_to_remove) in self";
 }
 
 ## ----------------------------------------------
@@ -553,7 +573,13 @@ This method accepts a numeric C<$index> and a B<Tree::Simple> object (C<$tree>),
 
 This method functions much as insertChild does, but instead of inserting a single B<Tree::Simple>, it inserts an array of B<Tree::Simple> objects. It too bounds checks the value of C<$index> and type checks the objects in C<@trees> just as C<insertChild> does.
 
-=item B<removeChild ($index)>
+=item B<removeChild> ($child)>
+
+This method removes a specific C<$child> comparing it with all the children until it finds the right one. At which point the C<$child> is removed and returned. If a non-B<Tree::Simple> object is given as the C<$child> argument, an exception is thrown.
+
+B<NOTE:> I have changed the behavior of the C<removeChild> method. Prior to 1.01, its functionality was that of C<removeChildAt>. However, to maintain backwards compatability, C<removeChild> will dispatch to C<removeChildAt> if it is given an index for an argument.    
+
+=item B<removeChildAt ($index)>
 
 This method accepts a numeric C<$index> and removes the tree found at that index from it's children list. This results in the shifting up of all children after the C<$index>. The C<$index> is checked to be sure it is the bounds of the child list, if this condition fail, an exception is thrown. The removed child is then returned.
 
@@ -678,15 +704,15 @@ I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Deve
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
  File                                  stmt branch   cond    sub    pod   time  total
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
- /Tree/Simple.pm                      100.0   98.6   75.6  100.0   95.8   10.9   95.9
- /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    3.2   96.2
- t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0    n/a   88.8  100.0
- t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a    n/a    5.7  100.0
- t/12_Tree_Simple_exceptions_test.t   100.0    n/a    n/a  100.0    n/a   14.8  100.0
- t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0    n/a   60.1  100.0
- t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0    n/a  100.0  100.0
+ /Tree/Simple.pm                      100.0   98.8   86.7  100.0   96.0   11.6   97.7
+ /Tree/Simple/Visitor.pm              100.0  100.0   90.0  100.0  100.0    0.2   97.3
+ t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0    n/a   70.5  100.0
+ t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a    n/a    5.3  100.0
+ t/12_Tree_Simple_exceptions_test.t   100.0    n/a    n/a  100.0    n/a    5.8  100.0
+ t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0    n/a    3.9  100.0
+ t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0    n/a    2.6  100.0
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------ 
- Total                                100.0   98.8   80.0  100.0   96.2  100.0   98.3
+ Total                                100.0   98.9   87.7  100.0   96.3  100.0   99.1
  ----------------------------------- ------ ------ ------ ------ ------ ------ ------
  
 
@@ -700,7 +726,7 @@ There are a few other Tree modules out there, here is a quick comparison between
 
 This module seems pretty stable and very robust, but it is also very large module. It is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. B<Tree::Simple>, by comparison, is a mere 450 lines of code and another 250 lines of documentation, hence the Simple in the name. B<Tree::DAG_Node> is part of the reason why I wrote B<Tree::Simple>, the author contends that you can use B<Tree::DAG_Node> for simpler purposes if you so desire, for me it is too beefy. 
 
-My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. B<Tree::Simple> on the other hand has 391 tests which covers approx. 98% of the code (see the L<CODE COVERAGE> section above).
+My other issue with B<Tree::DAG_Node> is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. B<Tree::Simple> on the other hand has 415 tests which covers 99% of the code (see the L<CODE COVERAGE> section above).
 
 =item B<Tree::Nary>
 

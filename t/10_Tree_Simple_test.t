@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 257;
+use Test::More tests => 277;
 
 BEGIN { 
 	use_ok('Tree::Simple'); 
@@ -15,7 +15,7 @@ BEGIN {
 # -----------------------------------------------------------------------------
 # File                              stmt branch   cond    sub   time  total
 # ------------------------------- ------ ------ ------ ------ ------ ------
-# /Tree/Simple.pm                   87.8   55.4   26.7   92.9   22.5   70.8
+# /Tree/Simple.pm                   88.6   57.3   26.7   93.8   12.9   74.4
 ## ----------------------------------------------------------------------------
 # NOTE:
 # This test checks the base functionality of the Tree::Simple object. The test
@@ -55,6 +55,7 @@ can_ok($tree, 'addChild');
 can_ok($tree, 'addChildren');
 can_ok($tree, 'insertChild');
 can_ok($tree, 'insertChildren');
+can_ok($tree, 'removeChildAt');
 can_ok($tree, 'removeChild');
 can_ok($tree, 'getChild');
 can_ok($tree, 'getAllChildren');
@@ -686,7 +687,7 @@ cmp_ok($sub_child->getDepth(), '==', 2, '... depth should be 0');
 ok eq_array([ $self_ref_tree_test_2->getAllChildren() ], [ $sub_child->getAllSiblings() ]);
 
 ## ----------------------------------------------------------------------------
-## test removeChild
+## test removeChildAt
 ## ----------------------------------------------------------------------------	
 
 my $sub_tree_of_tree_to_remove = Tree::Simple->new("1.1.a.1");
@@ -716,7 +717,7 @@ cmp_ok($sub_tree_of_tree_to_remove->getDepth(), '==', 2, '... the depth should b
 is($sub_tree->getChild(1), $tree_to_remove, '... these tree should be equal');		
 
 # remove the subtree (it will be returned)
-my $removed_tree = $sub_tree->removeChild(1);
+my $removed_tree = $sub_tree->removeChildAt(1);
 
 # now check that the one removed it the one 
 # we inserted origianlly
@@ -728,6 +729,87 @@ ok($tree_to_remove->isRoot());
 cmp_ok($tree_to_remove->getDepth(), '==', -1, '... the depth should be -1'); 
 # and the sub-trees depth is 0
 cmp_ok($sub_tree_of_tree_to_remove->getDepth(), '==', 0, '... the depth should be 0'); 	
+
+## ----------------------------------------------------------------------------
+## test removeChild
+## ----------------------------------------------------------------------------	
+
+my $sub_tree_of_tree_to_remove2 = Tree::Simple->new("1.1.a.1");
+# make a node to remove
+my $tree_to_remove2 = Tree::Simple->new("1.1.a")->addChild($sub_tree_of_tree_to_remove2);
+
+# test that its a root
+ok($tree_to_remove2->isRoot());
+
+# and that its depth is -1
+cmp_ok($tree_to_remove2->getDepth(), '==', -1, '... the depth should be -1'); 
+# and the sub-trees depth is 0
+cmp_ok($sub_tree_of_tree_to_remove2->getDepth(), '==', 0, '... the depth should be 0'); 
+
+# insert it into the sub_tree
+$sub_tree->insertChild(1, $tree_to_remove2);
+
+# test that it no longer thinks its a root
+ok(!$tree_to_remove2->isRoot());
+
+# check thats its depth is now 1
+cmp_ok($tree_to_remove2->getDepth(), '==', 1, '... the depth should be 1'); 
+# and the sub-trees depth is 2
+cmp_ok($sub_tree_of_tree_to_remove2->getDepth(), '==', 2, '... the depth should be 2'); 
+
+# make sure it is there
+is($sub_tree->getChild(1), $tree_to_remove2, '... these tree should be equal');		
+
+# remove the subtree (it will be returned)
+my $removed_tree2 = $sub_tree->removeChild($tree_to_remove2);
+
+# now check that the one removed it the one 
+# we inserted origianlly
+is($removed_tree2, $tree_to_remove2, '... these tree should be equal');
+
+# it should think its a root again
+ok($tree_to_remove2->isRoot());
+# and its depth should be back to -1
+cmp_ok($tree_to_remove2->getDepth(), '==', -1, '... the depth should be -1'); 
+# and the sub-trees depth is 0
+cmp_ok($sub_tree_of_tree_to_remove2->getDepth(), '==', 0, '... the depth should be 0'); 	
+
+## ----------------------------------------------------------------------------
+## test removeChild backwards compatability
+## ----------------------------------------------------------------------------	
+
+# make a node to remove
+my $tree_to_remove3 = Tree::Simple->new("1.1.a");
+
+# test that its a root
+ok($tree_to_remove3->isRoot());
+
+# and that its depth is -1
+cmp_ok($tree_to_remove3->getDepth(), '==', -1, '... the depth should be -1'); 
+
+# insert it into the sub_tree
+$sub_tree->insertChild(1, $tree_to_remove3);
+
+# test that it no longer thinks its a root
+ok(!$tree_to_remove3->isRoot());
+
+# check thats its depth is now 1
+cmp_ok($tree_to_remove3->getDepth(), '==', 1, '... the depth should be 1'); 
+
+# make sure it is there
+is($sub_tree->getChild(1), $tree_to_remove3, '... these tree should be equal');		
+
+# remove the subtree (it will be returned)
+my $removed_tree3 = $sub_tree->removeChild(1);
+
+# now check that the one removed it the one 
+# we inserted origianlly
+is($removed_tree3, $tree_to_remove3, '... these tree should be equal');
+
+# it should think its a root again
+ok($tree_to_remove3->isRoot());
+# and its depth should be back to -1
+cmp_ok($tree_to_remove3->getDepth(), '==', -1, '... the depth should be -1'); 
 
 ## ----------------------------------------------
 ## now test the edge cases
@@ -745,7 +827,7 @@ $sub_tree->addChild($tree_to_remove_2);
 is($sub_tree->getChild($sub_tree->getChildCount() - 1), $tree_to_remove_2, '... these tree should be equal');		
 
 # remove the subtree (it will be returned)
-my $removed_tree_2 = $sub_tree->removeChild($sub_tree->getChildCount() - 1);
+my $removed_tree_2 = $sub_tree->removeChildAt($sub_tree->getChildCount() - 1);
 
 # now check that the one removed it the one 
 # we inserted origianlly
@@ -763,7 +845,7 @@ $sub_tree->insertChild(0, $tree_to_remove_3);
 is($sub_tree->getChild(0), $tree_to_remove_3, '... these tree should be equal');		
 
 # remove the subtree (it will be returned)
-my $removed_tree_3 = $sub_tree->removeChild(0);
+my $removed_tree_3 = $sub_tree->removeChildAt(0);
 
 # now check that the one removed it the one 
 # we inserted origianlly
