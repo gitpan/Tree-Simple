@@ -4,7 +4,7 @@ package Tree::Simple::Visitor;
 use strict;
 use warnings;
 
-our $VERSION = '0.03';
+our $VERSION = '0.14';
  
 ## class constants
 

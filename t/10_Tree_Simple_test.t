@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More tests => 257;
 
 BEGIN { 
 	use_ok('Tree::Simple'); 
@@ -10,6 +10,12 @@ BEGIN {
 
 ## ----------------------------------------------------------------------------
 ## Test for Tree::Simple
+## ----------------------------------------------------------------------------
+# Code coverage stats for this test:
+# -----------------------------------------------------------------------------
+# File                              stmt branch   cond    sub   time  total
+# ------------------------------- ------ ------ ------ ------ ------ ------
+# /Tree/Simple.pm                   87.8   55.4   26.7   92.9   22.5   70.8
 ## ----------------------------------------------------------------------------
 # NOTE:
 # This test checks the base functionality of the Tree::Simple object. The test

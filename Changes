@@ -17,3 +17,13 @@ Revision history for Perl extension Tree::Simple.
 	  from version 0.01 to 0.02 and because of CPAN's security
 	  restriction about uploading files with a duplicate name
 	  I have to up the version number. 
+
+0.14  Sun April 4 2004
+    - I feel this module is ready for serious use. I have been
+	  using it in production environments for almost 2 years now,
+	  and I have recently beefed up the test suite as well. It now
+	  has 371 tests with approx. 95% code coverage. I feel the code
+	  is solid as is the API (although some people dont like my 
+	  Java-esque naming style, but hey whatta ya do). Most of this
+	  release is just tweaking and fine tuning of code, and updating
+	  of the documentation.

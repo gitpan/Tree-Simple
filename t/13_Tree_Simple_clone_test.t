@@ -2,10 +2,16 @@
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More tests => 32;
 
 ## ----------------------------------------------------------------------------
 ## Clone Tests for Tree::Simple
+## ----------------------------------------------------------------------------
+# Code coverage stats for this test:
+# -----------------------------------------------------------------------------
+# File                              stmt branch   cond    sub   time  total
+# ------------------------------- ------ ------ ------ ------ ------ ------
+# /Tree/Simple.pm                   48.6   32.4   37.8   46.4   14.4   42.7
 ## ----------------------------------------------------------------------------
 # NOTE:
 # This specifically tests the details of the cloning functions
@@ -78,6 +84,7 @@ is(ref($tree->getChild(4)->getNodeValue()), "CODE", '... these should be code re
 # and still the same
 is($clone->getChild(4)->getNodeValue(), $tree->getChild(4)->getNodeValue(), 
 	'... these should be the same code refs');	
+is($clone->getChild(4)->getNodeValue()->(), $CODE_REF->(), '... this is equal');
 
 # they should both be reg-ex refs
 is(ref($clone->getChild(5)->getNodeValue()), "Regexp", '... these should be reg-ex refs');

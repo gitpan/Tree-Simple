@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '0.03';
+our $VERSION = '0.14';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -456,7 +456,7 @@ __END__
 
 =head1 NAME
 
-Tree::Simple - A simple recursive tree object
+Tree::Simple - A simple tree object
 
 =head1 SYNOPSIS
 
@@ -489,7 +489,11 @@ Tree::Simple - A simple recursive tree object
 
 =head1 DESCRIPTION
 
-This module implements a simple recursive hierarchal tree-like object structure. It is built upon the idea of parent-child relationships, so therefore every B<Tree::Simple> object has both a parent and a set of children (who themselves have children, and so on). 
+This module in an fully object-oriented implementation of a simple n-ary tree. It is built upon the concept of parent-child relationships, so therefore every B<Tree::Simple> object has both a parent and a set of children (who themselves may have children, and so on). Every B<Tree::Simple> object also has siblings, as they are just the children of their immediate parent. 
+
+It is can be used to model hierarchal information such as a file-system, the organizational structure of a company, an object inheritance hierarchy, versioned files from a version control system or even an abstract syntax tree for use in a parser. It makes no assumptions as to your intended usage, but instead simply provides the structure and means of accessing and traversing said structure. 
+
+This module uses exceptions and a minimal Design By Contract style. All method arguments are required unless specified in the documentation, if a required argument is not defined an exception will usually be thrown. Many arguments are also required to be of a specific type, for instance the C<$parent> argument to the constructor B<must> be a B<Tree::Simple> object or an object derived from B<Tree::Simple>, otherwise an exception is thrown. This may seems harsh to some, but this allows me to have the confidence that my code works as I intend, and for you to enjoy the same level of confidence when using this module. Note however that this module does not use any Exception or Error module, the exceptions are just strings thrown with C<die>. 
 
 =head1 CONSTANTS
 
@@ -497,7 +501,7 @@ This module implements a simple recursive hierarchal tree-like object structure.
 
 =item ROOT
 
-This class constant serves as a placeholder for the root of our tree.
+This class constant serves as a placeholder for the root of our tree. If a tree does not have a parent, then it is considered a root. 
 
 =back
 
@@ -513,20 +517,6 @@ The constructor accepts two arguments a C<$node> value and an optional C<$parent
 
 =back
 
-=head2 Private Methods
-
-=over 4
-
-=item _init ($node, $parent, $children)
-
-This method is here largely to facilitate subclassing. This method is called by new to initialize the object, where new's primary responsibility is creating the instance.
-
-=item _setParent ($parent)
-
-This method sets up the parental relationship. It is for internal use only.
-
-=back
-
 =head2 Mutators
 
 =over 4
@@ -537,7 +527,7 @@ This sets the node value to the scalar C<$node_value>, an exception is thrown if
 
 =item addChild ($tree)
 
-This method accepts only B<Tree::Simple> objects or objects derived from B<Tree::Simple>, an exception is thrown otherwise. This method will append the given C<$tree> to the end of the children list, and set up the correct parent-child relationships. This method is set up to return its invocant so that method call chaining can be possible. Such as:
+This method accepts only B<Tree::Simple> objects or objects derived from B<Tree::Simple>, an exception is thrown otherwise. This method will append the given C<$tree> to the end of it's children list, and set up the correct parent-child relationships. This method is set up to return its invocant so that method call chaining can be possible. Such as:
 
   my $tree = Tree::Simple->new("root")->addChild(Tree::Simple->new("child one"));
 
@@ -551,19 +541,19 @@ Or the more complex:
 
 =item addChildren (@trees)
 
-This method accepts an array of B<Tree::Simple> objects, and adds them to the children list. Like C<addChild> this method will return its invocant to allow for method call chaining.
+This method accepts an array of B<Tree::Simple> objects, and adds them to it's children list. Like C<addChild> this method will return its invocant to allow for method call chaining.
 
 =item insertChild ($index, $tree)
 
-This method accepts a numeric C<$index> and a B<Tree::Simple> object (C<$tree>), and inserts the C<$tree> into the children list at the specified C<$index>. This results in the shifting down of all children after the C<$index>. The C<$index> is checked to be sure it is the bounds of the child list. The C<$tree> argument's type is verified to be a B<Tree::Simple> or B<Tree::Simple> derived object. If either of these two conditions fail, an exception is thrown. 
+This method accepts a numeric C<$index> and a B<Tree::Simple> object (C<$tree>), and inserts the C<$tree> into the children list at the specified C<$index>. This results in the shifting down of all children after the C<$index>. The C<$index> is checked to be sure it is the bounds of the child list, if it out of bounds an exception is thrown. The C<$tree> argument's type is verified to be a B<Tree::Simple> or B<Tree::Simple> derived object, if this condition fails, an exception is thrown. 
 
 =item insertChildren ($index, @trees)
 
-This method functions much as insertChild does, but instead of inserting a single B<Tree::Simple>, it inserts an array of B<Tree::Simple> objects. It too bounds checks the value of C<$index> and type checks the objects in C<@trees>.
+This method functions much as insertChild does, but instead of inserting a single B<Tree::Simple>, it inserts an array of B<Tree::Simple> objects. It too bounds checks the value of C<$index> and type checks the objects in C<@trees> just as C<insertChild> does.
 
 =item removeChild ($index)
 
-This method accepts a numeric C<$index> and removes the C<$tree> from the children list at the specified C<$index>. This results in the shifting up of all children after the C<$index>. The C<$index> is checked to be sure it is the bounds of the child list, if this condition fail, an exception is thrown. The removed child is then returned.
+This method accepts a numeric C<$index> and removes the tree found at that index from it's children list. This results in the shifting up of all children after the C<$index>. The C<$index> is checked to be sure it is the bounds of the child list, if this condition fail, an exception is thrown. The removed child is then returned.
 
 =item addSibling ($tree)
 
@@ -573,7 +563,7 @@ This method accepts a numeric C<$index> and removes the C<$tree> from the childr
 
 =item insertSiblings ($index, @trees)
 
-The C<addSibling>, C<addSiblings>, C<insertSibling> and C<insertSiblings> methods pass along their arguments to the C<addChild>, C<addChildren>, C<insertChild> and C<insertChildren> methods of their parent object respectively. This eliminates the need to overload these methods in subclasses which may have specialized versions of the *Child(ren) methods. The one execeptions is that if an attempt it made to add or insert siblings to the B<ROOT> of the tree then an exception is thrown.
+The C<addSibling>, C<addSiblings>, C<insertSibling> and C<insertSiblings> methods pass along their arguments to the C<addChild>, C<addChildren>, C<insertChild> and C<insertChildren> methods of their parent object respectively. This eliminates the need to overload these methods in subclasses which may have specialized versions of the *Child(ren) methods. The one exceptions is that if an attempt it made to add or insert siblings to the B<ROOT> of the tree then an exception is thrown.
 
 =back
 
@@ -604,7 +594,7 @@ Much like C<addSibling> and C<addSiblings>, these two methods simply call C<getC
 
 =item getDepth
 
-Returns a number representing the invocant's depth within the heirarchy of B<Tree::Simple> objects.
+Returns a number representing the invocant's depth within the hierarchy of B<Tree::Simple> objects.
 
 =item getParent
 
@@ -636,7 +626,7 @@ Returns true (1) if the invocant's parent is B<ROOT>, returns false (0) otherwis
 
 =item traverse (CODE)
 
-This method takes a single arguement of a subroutine reference C<$func>. If the argument is not defined and is not infact a CODE reference then an exception is thrown. The function is them applied recursively to all the children of the invocant. Here is an example of a traversal function that will print out the hierarchy as a tabed in list.
+This method takes a single argument of a subroutine reference C<$func>. If the argument is not defined and is not in fact a CODE reference then an exception is thrown. The function is then applied recursively to all the children of the invocant. Here is an example of a traversal function that will print out the hierarchy as a tabbed in list.
 
   $tree->traverse(sub {
         my ($_tree) = @_;
@@ -649,15 +639,91 @@ It accepts a B<Tree::Simple::Visitor> object (or somethings derived from a B<Tre
 
 =item clone 
 
-The clone method does a full deep-copy clone of the object, calling clone recursively on all its children. This does not call clone on the parent object however. Doing this would result in a slowly degenerating spiral of recursive death, so it is not recommended and therefore not implemented. What it does do is to copy the parent reference, which is a much more sensable act, and tends to be closer to what we are looking for. This can be a very expensive operation, and should only be undertaken with great care. More often than not, this method will not be appropriate. I recommend using the C<cloneShallow> method instead.
+The clone method does a full deep-copy clone of the object, calling clone recursively on all its children. This does not call clone on the parent object however. Doing this would result in a slowly degenerating spiral of recursive death, so it is not recommended and therefore not implemented. What it does do is to copy the parent reference, which is a much more sensible act, and tends to be closer to what we are looking for. This can be a very expensive operation, and should only be undertaken with great care. More often than not, this method will not be appropriate. I recommend using the C<cloneShallow> method instead.
 
 =item cloneShallow
 
-This method is an alternate option to the plain C<clone> method. This method allows the cloning of single B<Tree::Simple> object while retaining connections to the rest of the tree/heirarchy. This will attempt to call C<clone> on the invocant's node if the node is an object (and responds to C<$obj->can('clone')>) otherwise it will just copy it.
+This method is an alternate option to the plain C<clone> method. This method allows the cloning of single B<Tree::Simple> object while retaining connections to the rest of the tree/hierarchy. This will attempt to call C<clone> on the invocant's node if the node is an object (and responds to C<$obj-E<gt>can('clone')>) otherwise it will just copy it.
 
 =item DESTROY
 
-To avoid memory leaks through uncleaned-up circular references, we implement the DESTROY method. This method will attempt to call DESTROY on each of its children (if it as any). This will result in a cascade of calls to DESTORY on down the tree. This may not be a good idea, we will have to see how it works out in practice.
+To avoid memory leaks through uncleaned-up circular references, we implement the DESTROY method. This method will attempt to call DESTROY on each of its children (if it as any). This will result in a cascade of calls to DESTROY on down the tree. This may not be a good idea, we will have to see how it works out in practice.
+
+=back
+
+=head2 Private Methods
+
+=over 4
+
+=item _init ($node, $parent, $children)
+
+This method is here largely to facilitate subclassing. This method is called by new to initialize the object, where new's primary responsibility is creating the instance.
+
+=item _setParent ($parent)
+
+This method sets up the parental relationship. It is for internal use only.
+
+=back
+
+=head1 CODE COVERAGE
+
+I use Devel::Cover to test the code coverage of my modules, below is the Devel::Cover report on this modules test suite.
+
+	----------------------------------- ------ ------ ------ ------ ------
+	File                                  stmt branch   cond    sub  total
+	----------------------------------- ------ ------ ------ ------ ------
+	lib//Tree/Simple.pm                  100.0   98.6   75.6  100.0   95.9
+	lib//Tree/Simple/Visitor.pm           82.4   50.0   35.3  100.0   58.3
+	t/10_Tree_Simple_test.t              100.0    n/a    n/a  100.0  100.0
+	t/11_Tree_Simple_fixDepth_test.t     100.0    n/a    n/a    n/a  100.0
+	t/12_Tree_Simple_exceptions_test.t   100.0    n/a    n/a  100.0  100.0
+	t/13_Tree_Simple_clone_test.t        100.0    n/a    n/a  100.0  100.0
+	t/20_Tree_Simple_Visitor_test.t      100.0    n/a    n/a  100.0  100.0
+	----------------------------------- ------ ------ ------ ------ ------
+	Total                                 99.5   91.9   64.5  100.0   96.1
+	----------------------------------- ------ ------ ------ ------ ------
+
+=head1 OTHER TREE MODULES
+
+There are a few other Tree modules out there, here is a quick comparison between Tree::Simple and them. Obviously I am biased, so take what I say with a grain of salt, and keep in mind, I wrote Tree::Simple because I could not find a Tree module that suited my needs. If Tree::Simple does not fit your needs, I recommend looking at these modules. Please note that I only list registered Tree::* modules here, I have only seen a few other modules outside of that namespace that seem to fit, although most of them are part of another distribution (HTML::Tree, Pod::Tree, etc). 
+
+=over 4
+
+=item Tree::DAG_Node
+
+This module seems pretty stable and very robust, but it is also very large module. It is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. Tree::Simple, by comparison, is a mere 450 lines of code and another 250 lines of documentation, hence the Simple part of the name. Tree::DAG_Node is part of the reason why I wrote Tree::Simple, the author contends that you can use Tree::DAG_Node for simpler purposes if you so desire, for me it is too beefy. 
+
+My other issue with Tree::DAG_Node is its test-suite. There is one test, and that is that the module loads. This is not acceptable to me, no matter how good a module is. Tree::Simple on the other hand has 372 tests which covers approx. 96% of the code (see the L<CODE COVERAGE> section above).
+
+=item Tree::Nary
+
+It is a (somewhat) direct translation of the N-ary tree from the GLIB library, and the API is based on that. GLIB is a C library, which means this is a very C-ish API. That doesn't appeal to me, it might to you, to each their own.
+
+This module is similar in intent to Tree::Simple. It implements a tree with I<n> branches and has polymorphic node containers. It implements much of the same methods as Tree::Simple and a few others on top of that, but being based on a C library, is not very OO. In most of the method calls the C<$self> argument is not used and the second argument C<$node> is. Tree::Simple is a much more OO module than Tree::Nary, so while they are similar in functionality they greatly differ in implementation style.
+
+=item Tree
+
+This module is pretty old, it has not been updated since Oct. 31, 1999 and is still on version 0.01. It also seems to be (from the limited documentation) a balanced tree, Tree::Simple makes no attempt to balance anything.
+
+=item Tree::Ternary
+
+This module is older than Tree, last update was Sept. 24th, 1999. It seems to be a special purpose tree, for storing and accessing strings, not general purpose like Tree::Simple. 
+
+=item Tree::Ternary_XS
+
+This module is an XS implementation of the above tree type. 
+
+=item Tree::Trie
+
+This too is a specialized tree type, it sounds similar to the Tree::Ternary, but it much newer (latest release in 2003). It seems specialized for the lookup and retrieval of information like a hash.
+
+=item Tree::M
+
+Is a wrapper for a C++ library, whereas Tree::Simple is pure-perl. It also seems to be a more specialized implementation of a tree, therefore not really the same as Tree::Simple 
+
+=item Tree::Fat
+
+Is a wrapper around a C library, again Tree::Simple is pure-perl. The author describes FAT-trees as a combination of a Tree and an array. It looks like a pretty mean and lean module, and good if you need speed and are implementing a custom data-store of some kind. The author points out too that the module is designed for embedding and there is not default embedding, so you can't really use it "out of the box".
 
 =back
 
