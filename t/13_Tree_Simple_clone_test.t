@@ -1,4 +1,5 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
+
 use strict;
 use warnings;
 
@@ -68,8 +69,10 @@ is(ref($tree->getChild(2)->getNodeValue()), "ARRAY", '... these should be array 
 isnt($clone->getChild(2)->getNodeValue(), $tree->getChild(2)->getNodeValue(), 
 	'... these should be different array refs');	
 # with the same value	
-ok(eq_array($clone->getChild(2)->getNodeValue(), $tree->getChild(2)->getNodeValue(), 
-	'... these should have the same contents'));
+is_deeply(
+    $clone->getChild(2)->getNodeValue(), 
+    $tree->getChild(2)->getNodeValue(), 
+	'... these should have the same contents');
 	
 # they should both be hash refs
 is(ref($clone->getChild(3)->getNodeValue()), "HASH", '... these should be hash refs');
@@ -78,8 +81,10 @@ is(ref($tree->getChild(3)->getNodeValue()), "HASH", '... these should be hash re
 isnt($clone->getChild(3)->getNodeValue(), $tree->getChild(3)->getNodeValue(), 
 	'... these should be different hash refs');	
 # with the same value	
-ok(eq_hash($clone->getChild(3)->getNodeValue(), $tree->getChild(3)->getNodeValue(), 
-	'... these should have the same contents'));	
+is_deeply(
+    $clone->getChild(3)->getNodeValue(), 
+    $tree->getChild(3)->getNodeValue(), 
+	'... these should have the same contents');	
 
 # they should both be code refs
 is(ref($clone->getChild(4)->getNodeValue()), "CODE", '... these should be code refs');
@@ -129,11 +134,10 @@ my $shallow_clone = $tree->cloneShallow();
 
 isnt($shallow_clone, $tree, '... these should be refs');
 
-ok(eq_array(
+is_deeply(
 		[ $shallow_clone->getAllChildren() ],
 		[ $tree->getAllChildren() ],
-		'... the children are the same'
-		));
+		'... the children are the same');
 		
 my $sub_tree = $tree->getChild(7);
 my $sub_tree_clone = $sub_tree->cloneShallow();

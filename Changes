@@ -1,5 +1,22 @@
 Revision history for Perl extension Tree::Simple.
 
+1.13 Mon Nov 15 2004
+    - added width functionality (with getWidth), 
+      thanks to Mark Thomas for his insight/suggestions
+        - added tests for this
+        - added documentation for this
+    - improved the height functionality, thanks again
+      to Mark Thomas for his insight/suggestions
+        - deprecated the 'height' method in favor 
+          of the more consistent 'getHeight' method
+        - added tests for this
+        - added documentation for this
+    - added some info in the docs to explain the depth
+      value for ROOT trees.
+    - cleaned up and improved the following test files 
+      	> 11_Tree_Simple_fixDepth_test.t
+        > 13_Tree_Simple_clone_test.t
+
 1.12 Thurs Oct 7 2004
     - fixed the clone method, it was not correctly
       cloning parental relationships

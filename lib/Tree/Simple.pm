@@ -4,7 +4,7 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.12';
+our $VERSION = '1.13';
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
@@ -41,7 +41,9 @@ sub _init {
 	$self->{_children} = $children;	
     # initialize the parent and depth here
     $self->{_parent} = undef;
-    $self->{_depth} = undef;    
+    $self->{_depth}  = undef;    
+    $self->{_height} = 1;
+    $self->{_width} = 1;
 	# Now check our $parent value
 	if (defined($parent)) {
         if (ref($parent) && UNIVERSAL::isa($parent, "Tree::Simple")) {
@@ -76,6 +78,26 @@ sub _setParent {
 	}
 }
 
+sub _setHeight {
+    my ($self, $child) = @_;
+    my $child_height = $child->getHeight();
+    return if ($self->{_height} >= $child_height + 1);
+    $self->{_height} = $child_height + 1;
+    # and now bubble up to the parent (unless we are the root)
+    $self->getParent()->_setHeight($self) unless $self->isRoot();
+}
+
+sub _setWidth {
+    my ($self, $child_width) = @_;
+    if (ref($child_width)) {
+        return if ($self->{_width} > $self->getChildCount());    
+        $child_width = $child_width->getWidth();
+    }
+    $self->{_width} += $child_width;
+    # and now bubble up to the parent (unless we are the root)
+    $self->getParent()->_setWidth($child_width) unless $self->isRoot();            
+}
+
 ## ----------------------------------------------------------------------------
 ## mutators
 
@@ -99,6 +121,8 @@ sub addChild {
 	(defined($tree) && ref($tree) && UNIVERSAL::isa($tree, "Tree::Simple")) 
 		|| die "Insufficient Arguments : Child must be a Tree::Simple object";
 	$tree->_setParent($self);
+    $self->_setHeight($tree);
+    $self->_setWidth($tree);    
 	$tree->fixDepth() unless $tree->isLeaf();
 	push @{$self->{_children}} => $tree;	
 	$self;
@@ -124,6 +148,8 @@ sub insertChildren {
 		(defined($tree) && ref($tree) && UNIVERSAL::isa($tree, "Tree::Simple")) 
 			|| die "Insufficient Arguments : Child must be a Tree::Simple object";	
 		$tree->_setParent($self);
+        $self->_setHeight($tree);   
+        $self->_setWidth($tree);                         
 		$tree->fixDepth() unless $tree->isLeaf();
 	}
 	# if index is zero, use this optimization
@@ -173,6 +199,9 @@ sub removeChildAt {
 			@{$self->{_children}}[($index + 1) .. $#{$self->{_children}}],
 			];
 	}
+    # make sure we fix the height
+    $self->fixHeight();
+    $self->fixWidth();    
 	# make sure that the removed child
 	# is no longer connected to the parent
 	# so we change its parent to ROOT
@@ -279,6 +308,22 @@ sub getNodeValue {
 	return $self->{_node};
 }
 
+# this now has an alternate implementation
+# which eliminates the on demand recursion 
+# and instead stores the height in each node
+sub getHeight {
+    my ($self) = @_;
+    return $self->{_height};
+}
+
+# for backwards compatability
+*height = \&getHeight;
+
+sub getWidth {
+    my ($self) = @_;
+    return $self->{_width};
+}
+
 sub getChildCount {
 	my ($self) = @_;
 	return scalar @{$self->{_children}};
@@ -335,16 +380,6 @@ sub size {
     return $size;
 }
 
-sub height {
-    my ($self) = @_;
-    my $max_height = 0;
-    foreach my $child ($self->getAllChildren()) {
-        my $child_height = $child->height();
-        $max_height = $child_height if ($max_height < $child_height); 
-    }
-    return $max_height + 1;
-}
-
 ## ----------------------------------------------------------------------------
 ## misc
 
@@ -376,6 +411,40 @@ sub fixDepth {
 			$tree->{_depth} = $tree->getParent()->getDepth() + 1;
 		}
 	);
+}
+
+# NOTE:
+# This method is used to fix any height 
+# discrepencies which might arise when 
+# you remove a sub-tree
+sub fixHeight {
+    my ($self) = @_;
+    # we must find the tallest sub-tree
+    # and use that to define the height
+    my $max_height = 0;
+    unless ($self->isLeaf()) {
+        foreach my $child ($self->getAllChildren()) {
+            my $child_height = $child->getHeight();
+            $max_height = $child_height if ($max_height < $child_height);
+        }
+    }
+    # if there is no change, then we 
+    # need not bubble up through the
+    # parents
+    return if ($self->{_height} == ($max_height + 1));
+    # otherwise ...
+    $self->{_height} = $max_height + 1;
+    # now we need to bubble up through the parents 
+    # in order to rectify any issues with height
+    $self->getParent()->fixHeight() unless $self->isRoot();
+}
+
+sub fixWidth {
+    my ($self) = @_;
+    my $fixed_width = 0;
+    $fixed_width += $_->getWidth() foreach $self->getAllChildren();
+    $self->{_width} = $fixed_width;
+    $self->getParent()->fixWidth() unless $self->isRoot();
 }
 
 sub traverse {
@@ -687,11 +756,21 @@ Much like C<addSibling> and C<addSiblings>, these two methods simply call C<getC
 
 =item B<getDepth>
 
-Returns a number representing the invocant's depth within the hierarchy of B<Tree::Simple> objects.
+Returns a number representing the invocant's depth within the hierarchy of B<Tree::Simple> objects. 
+
+B<NOTE:> A C<ROOT> tree has the depth of -1. This be because Tree::Simple assumes that a tree's root will usually not contain data, but just be an anchor for the data-containing branches. This may not be intuitive in all cases, so I mention it here.
 
 =item B<getParent>
 
 Returns the invocant's parent, which could be either B<ROOT> or a B<Tree::Simple> object.
+
+=item B<getHeight>
+
+Returns a number representing the length of the longest path from the current tree to the furthest leaf node.
+
+=item B<getWidth>
+
+Returns the a number representing the breadth of the current tree, basically it is a count of all the leaf nodes.
 
 =item B<getChildCount>
 
@@ -736,7 +815,9 @@ Returns the total number of nodes in the current tree and all its sub-trees.
 
 =item B<height>
 
-Returns the length of the longest path from the current tree to the furthest leaf node.
+This method has also been B<deprecated> in favor of the C<getHeight> method above, it remains as an alias to C<getHeight> for backwards compatability. 
+
+B<NOTE:> This is also no longer a recursive method which get's it's value on demand, but a value stored in the Tree::Simple object itself, hopefully making it much more efficient and usable.
 
 =back
 
@@ -782,11 +863,21 @@ Because of perl's reference counting scheme and how that interacts with circular
 
 =item B<fixDepth>
 
-For the most part, Tree::Simple will manage your tree's depth fields for you. But occasionally your tree's depth may get out of place. If you run this method, it will traverse your tree correcting the depth as it goes.
+Tree::Simple will manage your tree's depth field for you using this method. You should never need to call it on your own, however if you ever did need to, here is it. Running this method will traverse your all the invocant's sub-trees correcting the depth as it goes.
+
+=item B<fixHeight>
+
+Tree::Simple will manage your tree's height field for you using this method. You should never need to call it on your own, however if you ever did need to, here is it. Running this method will correct the heights of the current tree and all it's ancestors.
+
+=item B<fixWidth>
+
+Tree::Simple will manage your tree's width field for you using this method. You should never need to call it on your own, however if you ever did need to, here is it. Running this method will correct the widths of the current tree and all it's ancestors.
 
 =back
 
 =head2 Private Methods
+
+I would not normally document private methods, but in case you need to subclass Tree::Simple, here they are.
 
 =over 4
 
@@ -797,6 +888,10 @@ This method is here largely to facilitate subclassing. This method is called by 
 =item B<_setParent ($parent)>
 
 This method sets up the parental relationship. It is for internal use only.
+
+=item B<_setHeight ($child)>
+
+This method will set the height field based upon the height of the given C<$child>.
 
 =back
 
@@ -857,16 +952,16 @@ None that I am aware of. The code is pretty thoroughly tested (see L<CODE COVERA
 
 =head1 CODE COVERAGE
 
-I use B<Devel::Cover> to test the code coverage of my tests, below is the B<Devel::Cover> report on this module's test suite.
+I use L<Devel::Cover> to test the code coverage of my tests, below is the L<Devel::Cover> report on this module's test suite.
  
- ------------------------ ------ ------ ------ ------ ------ ------ ------
+ ------------------------ ------ ------ ------ ------ ------ ------ ------ 
  File                       stmt branch   cond    sub    pod   time  total
- ------------------------ ------ ------ ------ ------ ------ ------ ------
- Tree/Simple.pm             99.5   96.9   91.7  100.0   96.7   95.6   97.9
- Tree/Simple/Visitor.pm    100.0   96.2   90.0  100.0  100.0    4.4   97.6
- ------------------------ ------ ------ ------ ------ ------ ------ ------
- Total                      99.6   96.8   91.2  100.0   97.4  100.0   97.8
- ------------------------ ------ ------ ------ ------ ------ ------ ------
+ ------------------------ ------ ------ ------ ------ ------ ------ ------ 
+ Tree/Simple.pm             99.6   97.4   91.7  100.0   97.0   95.8   98.1
+ Tree/Simple/Visitor.pm    100.0   96.2   90.0  100.0  100.0    4.2   97.6
+ ------------------------ ------ ------ ------ ------ ------ ------ ------ 
+ Total                      99.7   97.2   91.2  100.0   97.6  100.0   98.0
+ ------------------------ ------ ------ ------ ------ ------ ------ ------ 
 
 =head1 SEE ALSO
 
@@ -874,15 +969,17 @@ I have written a number of other modules which use or augment this module, they 
 
 =over 4
 
-=item B<Tree::Parser> - A module for parsing formatted files into Tree::Simple hierarchies.
+=item L<Tree::Parser> - A module for parsing formatted files into Tree::Simple hierarchies.
 
-=item B<Tree::Simple::View> - A set of classes for viewing Tree::Simple hierarchies in various output formats.
+=item L<Tree::Simple::View> - A set of classes for viewing Tree::Simple hierarchies in various output formats.
 
-=item B<Tree::Simple::VisitorFactory> - A set of several useful Visitor objects for Tree::Simple objects.
+=item L<Tree::Simple::VisitorFactory> - A set of several useful Visitor objects for Tree::Simple objects.
+
+=item L<Tree::Binary> - If you are looking for a binary tree, this you might want to check this one out.
 
 =back
 
-Also, the author of B<Data::TreeDumper> and I have worked together to make sure that B<Tree::Simple> and his module work well together. If you need a quick and handy way to dump out a Tree::Simple heirarchy, this module does an excellent job (and plenty more as well).
+Also, the author of L<Data::TreeDumper> and I have worked together to make sure that B<Tree::Simple> and his module work well together. If you need a quick and handy way to dump out a Tree::Simple heirarchy, this module does an excellent job (and plenty more as well).
 
 I have also recently stumbled upon some packaged distributions of Tree::Simple for the various Unix flavors. Here  are some links:
 
@@ -902,45 +999,45 @@ There are a few other Tree modules out there, here is a quick comparison between
 
 =over 4
 
-=item B<Tree::DAG_Node>
+=item L<Tree::DAG_Node>
 
-This module seems pretty stable and very robust with a lot of functionality. However, B<Tree::DAG_Node> does not come with any automated tests. It's I<test.pl> file simply checks the module loads and nothing else. While I am sure the author tested his code, I would feel better if I was able to see that. The module is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. But given that it is a well known fact that the likeliness of bugs increases along side the size of the code, I do not feel comfortable with large modules with no tests.
+This module seems pretty stable and very robust with a lot of functionality. However, B<Tree::DAG_Node> does not come with any automated tests. It's I<test.pl> file simply checks the module loads and nothing else. While I am sure the author tested his code, I would feel better if I was able to see that. The module is approx. 3000 lines with POD, and 1,500 without the POD. The shear depth and detail of the documentation and the ratio of code to documentation is impressive, and not to be taken lightly. But given that it is a well known fact that the likeliness of bugs increases along side the size of the code, I do not feel comfortable with large modules like this which have no tests.
 
 All this said, I am not a huge fan of the API either, I prefer the gender neutral approach in B<Tree::Simple> to the mother/daughter style of B<Tree::DAG_Node>. I also feel very strongly that B<Tree::DAG_Node> is trying to do much more than makes sense in a single module, and is offering too many ways to do the same or similar things. 
 
 However, of all the Tree::* modules out there, B<Tree::DAG_Node> seems to be one of the favorites, so it may be worth investigating.
 
-=item B<Tree::MultiNode>
+=item L<Tree::MultiNode>
 
 I am not very familiar with this module, however, I have heard some good reviews of it, so I thought it deserved mention here. I believe it is based upon C++ code found in the book I<Algorithms in C++> by Robert Sedgwick. It uses a number of interesting ideas, such as a ::Handle object to traverse the tree with (similar to Visitors, but also seem to be to be kind of like a cursor). However, like B<Tree::DAG_Node>, it is somewhat lacking in tests and has only 6 tests in its suite. It also has one glaring bug, which is that there is currently no way to remove a child node.
 
-=item B<Tree::Nary>
+=item L<Tree::Nary>
 
 It is a (somewhat) direct translation of the N-ary tree from the GLIB library, and the API is based on that. GLIB is a C library, which means this is a very C-ish API. That doesn't appeal to me, it might to you, to each their own.
 
 This module is similar in intent to B<Tree::Simple>. It implements a tree with I<n> branches and has polymorphic node containers. It implements much of the same methods as B<Tree::Simple> and a few others on top of that, but being based on a C library, is not very OO. In most of the method calls the C<$self> argument is not used and the second argument C<$node> is. B<Tree::Simple> is a much more OO module than B<Tree::Nary>, so while they are similar in functionality they greatly differ in implementation style.
 
-=item B<Tree>
+=item L<Tree>
 
 This module is pretty old, it has not been updated since Oct. 31, 1999 and is still on version 0.01. It also seems to be (from the limited documentation) a binary and a balanced binary tree, B<Tree::Simple> is an I<n>-ary tree, and makes no attempt to balance anything.
 
-=item B<Tree::Ternary>
+=item L<Tree::Ternary>
 
 This module is older than B<Tree>, last update was Sept. 24th, 1999. It seems to be a special purpose tree, for storing and accessing strings, not general purpose like B<Tree::Simple>. 
 
-=item B<Tree::Ternary_XS>
+=item L<Tree::Ternary_XS>
 
 This module is an XS implementation of the above tree type. 
 
-=item B<Tree::Trie>
+=item L<Tree::Trie>
 
 This too is a specialized tree type, it sounds similar to the B<Tree::Ternary>, but it much newer (latest release in 2003). It seems specialized for the lookup and retrieval of information like a hash.
 
-=item B<Tree::M>
+=item L<Tree::M>
 
 Is a wrapper for a C++ library, whereas B<Tree::Simple> is pure-perl. It also seems to be a more specialized implementation of a tree, therefore not really the same as B<Tree::Simple>. 
 
-=item B<Tree::Fat>
+=item L<Tree::Fat>
 
 Is a wrapper around a C library, again B<Tree::Simple> is pure-perl. The author describes FAT-trees as a combination of a Tree and an array. It looks like a pretty mean and lean module, and good if you need speed and are implementing a custom data-store of some kind. The author points out too that the module is designed for embedding and there is not default embedding, so you can't really use it "out of the box".
 
@@ -955,6 +1052,8 @@ Is a wrapper around a C library, again B<Tree::Simple> is pure-perl. The author 
 =item Thanks to Brett Nuske for his idea for the C<getUID> and C<setUID> methods.
 
 =item Thanks to whomever submitted the memory leak bug to RT (#7512). 
+
+=item Thanks to Mark Thomas for his insight into how to best handle the I<height> and I<width> properties without unessecary recursion.
 
 =back
 

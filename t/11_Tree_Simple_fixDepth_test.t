@@ -1,8 +1,9 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
+
 use strict;
 use warnings;
 
-use Test::More tests => 39;
+use Test::More tests => 46;
 
 ## ----------------------------------------------------------------------------
 ## fixDepth Tests for Tree::Simple
@@ -24,10 +25,10 @@ my $tree = Tree::Simple->new("2.1")
 					);
 
 # make sure its a root	
-ok($tree->isRoot());
+ok($tree->isRoot(), '... our tree is a root');
 
 # and it is not a leaf
-ok(!$tree->isLeaf());
+ok(!$tree->isLeaf(), '... and it is not a leaf');
 					
 # and that its depth is -1 					
 cmp_ok($tree->getDepth(), '==', -1, '... our depth should be -1');		
@@ -39,16 +40,19 @@ cmp_ok($tree->getChildCount(), '==', 3, '... we have 3 children');
 # now check each subtree 		
 foreach my $sub_tree ($tree->getAllChildren()) {
 	# they are not root
-	ok(!$sub_tree->isRoot());
+	ok(!$sub_tree->isRoot(), '... our subtree is not a root');
 	# they are leaves
-	ok($sub_tree->isLeaf());
+	ok($sub_tree->isLeaf(), '... however it is a leaf');
 	# and their parent is $tree
 	is($sub_tree->getParent(), $tree, '... these should both be equal');
 	# their depth should be 0
 	cmp_ok($sub_tree->getDepth(), '==', 0, '... our depth should be 0');
 	# and their siblings should match 
 	# the children of their parent
-	ok eq_array([ $tree->getAllChildren() ], [ $sub_tree->getAllSiblings() ]);
+	is_deeply(
+        [ $tree->getAllChildren() ], 
+        [ $sub_tree->getAllSiblings() ], 
+        '... our siblings are the same');
 }	
 
 # at this point we know we have a 
@@ -65,10 +69,10 @@ $parent_tree->addChildren(
 	);
 
 # make sure its a root
-ok($parent_tree->isRoot());
+ok($parent_tree->isRoot(), '... our parent tree is a root');
 
 # and that its not a leaf
-ok(!$parent_tree->isLeaf());
+ok(!$parent_tree->isLeaf(), '... our parent tree is a leaf');
 		
 # check the depth, which should be -1
 cmp_ok($parent_tree->getDepth(), '==', -1, '... our depth should be -1');		
@@ -79,16 +83,19 @@ cmp_ok($parent_tree->getChildCount(), '==', 2, '... we have 2 children');
 # now check our subtrees		
 foreach my $sub_tree ($parent_tree->getAllChildren()) {
 	# make sure they are not roots
-	ok(!$sub_tree->isRoot());
+	ok(!$sub_tree->isRoot(), '... the sub tree is not a root');
 	# and they are leaves
-	ok($sub_tree->isLeaf());
+	ok($sub_tree->isLeaf(), '... but it is a leaf');
 	# and their parent is $parent_tree
 	is($sub_tree->getParent(), $parent_tree, '... these should both be equal');
 	# and their depth is 0
 	cmp_ok($sub_tree->getDepth(), '==', 0, '... our depth should be 0');
 	# and that all their siblinds match
 	# the children of their parent
-	ok eq_array([ $parent_tree->getAllChildren() ], [ $sub_tree->getAllSiblings() ]);
+	is_deeply(
+        [ $parent_tree->getAllChildren() ], 
+        [ $sub_tree->getAllSiblings() ],
+        '... the siblings are the same as the children');
 }
 
 # now here comes the heart of this test
@@ -98,7 +105,7 @@ $parent_tree->getChild(1)->addChild($tree);
 	
 # now we verify that $tree no longer 
 # thinks that its a root	
-ok(!$tree->isRoot());
+ok(!$tree->isRoot(), '... our tree is not longer a root');
 					
 # that $tree's depth has been 
 # updated to reflect its new place
@@ -118,6 +125,27 @@ foreach my $sub_tree ($tree->getAllChildren()) {
 	cmp_ok($sub_tree->getDepth(), '==', 2, '... our depth should be 2');
 	
 }	
+
+# now we need to test what happens when we remove stuff
+
+my $removed = $parent_tree->getChild(1)->removeChild($tree);
+
+is($removed, $tree, '... we got the same tree');
+
+# make sure its a root	
+ok($removed->isRoot(), '... our tree is a root again');
+
+# and it is not a leaf
+ok(!$removed->isLeaf(), '... and it is not a leaf');
+					
+# and that its depth is -1 					
+cmp_ok($removed->getDepth(), '==', -1, '... our depth should be corrected to be -1');				
+
+# now check each subtree 		
+foreach my $sub_tree ($removed->getAllChildren()) {
+	# their depth should be 0 now
+	cmp_ok($sub_tree->getDepth(), '==', 0, '... our depth should be corrected to be 0');
+}
 
 ## ----------------------------------------------------------------------------
 ## end fixDepth Tests for Tree::Simple
