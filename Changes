@@ -1,5 +1,12 @@
 Revision history for Perl extension Tree::Simple.
 
+1.15 Thurs May 26, 2005
+    - added optional use of weakened parent references
+      and improved the old circular reference DESTROY
+      model to make more sense. See the documantation 
+      for more info.
+    - fixed bug in the fixDepth() function
+
 1.14 Thurs Nov 18 2004
     - now using Scalar::Util::blessed() instead of 
       the convoluted UNIVERSAL::isa() stuff. 

@@ -4,13 +4,21 @@ package Tree::Simple;
 use strict;
 use warnings;
 
-our $VERSION = '1.14';
+our $VERSION = '1.15';
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 
 ## ----------------------------------------------------------------------------
 ## Tree::Simple
 ## ----------------------------------------------------------------------------
+
+my $USE_WEAK_REFS;
+
+sub import {
+    shift;
+    return unless @_;
+    $USE_WEAK_REFS++ if lc($_[0]) eq 'use_weak_refs';
+}
 
 ## class constants
 use constant ROOT => "root";
@@ -22,7 +30,7 @@ sub new {
 	my $class = ref($_class) || $_class;
 	my $tree = {};
 	bless($tree, $class);
-	$tree->_init($node, $parent, []);
+	$tree->_init($node, $parent, []);  
 	return $tree;
 }
 
@@ -45,7 +53,7 @@ sub _init {
     $self->{_parent} = undef;
     $self->{_depth}  = undef;    
     $self->{_height} = 1;
-    $self->{_width} = 1;
+    $self->{_width}  = 1;
 	# Now check our $parent value
 	if (defined($parent)) {
         if (blessed($parent) && $parent->isa("Tree::Simple")) {
@@ -71,13 +79,20 @@ sub _setParent {
 	(defined($parent) && 
 		(($parent eq ROOT) || (blessed($parent) && $parent->isa("Tree::Simple"))))
 		|| die "Insufficient Arguments : parent also must be a Tree::Simple object";
-	$self->{_parent} = $parent;
+	$self->{_parent} = $parent;    
 	if ($parent eq ROOT) {
 		$self->{_depth} = -1;
 	}
 	else {
+        weaken($self->{_parent}) if $USE_WEAK_REFS;    
 		$self->{_depth} = $parent->getDepth() + 1;
 	}
+}
+
+sub _detachParent {
+    return if $USE_WEAK_REFS;
+    my ($self) = @_;
+    $self->{_parent} = undef;
 }
 
 sub _setHeight {
@@ -410,6 +425,7 @@ sub fixDepth {
 	# is up to date all the way down
 	$self->traverse(sub {
 			my ($tree) = @_;
+            return if $tree->isRoot();
 			$tree->{_depth} = $tree->getParent()->getDepth() + 1;
 		}
 	);
@@ -577,20 +593,23 @@ sub _cloneNode {
 ## Desctructor
 
 sub DESTROY {
+    # if we are using weak refs 
+    # we dont need to worry about
+    # destruction, it will just happen
+    return if $USE_WEAK_REFS;
 	my ($self) = @_;
-	# if we are a leaf then just let 
-	# the DESTRUCTION happen but if 
-	# we are a not a leaf, then we want
-	# to call DESTORY on all our children
-	# (first checking if they are defined
-	# though since we never know how perl's
-	# garbage collector will work)    
+    # we want to detach all our children from 
+    # ourselves, this will break most of the 
+    # connections and allow for things to get
+    # reaped properly
 	unless (!$self->{_children} && scalar(@{$self->{_children}}) == 0) {
 		foreach my $child (@{$self->{_children}}) { 
-			defined $child && $child->DESTROY();
+			defined $child && $child->_detachParent();
 		}
 	}
-    $self->{_parent} = undef;
+    # we do not need to remove or undef the _children
+    # of the _parent fields, this will cause some 
+    # unwanted releasing of connections. 
 }
 
 ## ----------------------------------------------------------------------------
@@ -899,54 +918,53 @@ This method will set the height field based upon the height of the given C<$chil
 
 =head1 CIRCULAR REFERENCES
 
-Perl uses reference counting to manage the destruction of objects, and this can cause problems with circularly referencing object like Tree::Simple. In order to properly manage your circular references, it is nessecary to manually call the C<DESTROY> method on a Tree::Simple instance. Here is some example code:
+I have revised the model by which Tree::Simple deals with ciruclar references. In the past all circular references had to be manually destroyed by calling DESTROY. The call to DESTROY would then call DESTROY on all the children, and therefore cascade down the tree. This however was not always what was needed, nor what made sense, so I have now revised the model to handle things in what I feel is a more consistent and sane way. 
 
-  # create a root
-  my $root = Tree::Simple->new()
-  
-  { # create a lexical scope
-  
-      # create a subtree (with a child)
-      my $subtree = Tree::Simple->new("1")
-                          ->addChild(
-                              Tree::Simple->new("1.1")
-                          );
-                          
-      # add the subtree to the root                    
-      $root->addChild($subtree);                    
-      
-      # ... do something with your trees 
-      
-      # remove the first child
-      $root->removeChild(0);
-  }
+Circular references are now managed with the simple idea that the parent makes the descisions for the child. This means that child-to-parent references are weak, while parent-to-child references are strong. So if a parent is destroyed it will force all it's children to detach from it, however, if a child is destroyed it will not be detached from it's parent.
 
-At this point you might expect perl to reap C<$subtree> since it has been removed from the C<$root> and is no longer available outside the lexical scope of the block. However, since C<$subtree> itself has a child, its reference count is still (at least) one and perl will not reap it. The solution to this is to call the C<DESTROY> method manually at the end of the lexical block, this will result in the breaking of all relations with the DESTROY-ed object and allow that object to be reaped by perl. Here is a corrected version of the above code.
+=head2 Optional Weak References
 
-  # create a root
-  my $root = Tree::Simple->new()
-  
-  { # create a lexical scope
-  
-      # create a subtree (with a child)
-      my $subtree = Tree::Simple->new("1")
-                          ->addChild(
-                              Tree::Simple->new("1.1")
-                          );
-                          
-      # add the subtree to the root                    
-      $root->addChild($subtree);                    
-      
-      # ... do something with your trees 
-      
-      # remove the first child and capture it
-      my $removed = $root->removeChild(0);
-      
-      # now force destruction of the removed child
-      $removed->DESTROY();
-  }
+By default, you are still required to call DESTROY in order for things to happen. However I have now added the option to use weak references, which alleviates the need for the manual call to DESTROY and allows Tree::Simple to manage this automatically. This is accomplished with a compile time setting like this:
 
-As you can see if the corrected version we used a new variable to capture the removed tree, and then explicitly called C<DESTROY> upon it. Only when a removed subtree has no children (it is a leaf node) can you safely ignore the call to C<DESTROY>. It is even nessecary to call C<DESTROY> on the root node if you want it to be reaped before perl exits, this is especially important in long running environments like mod_perl.
+  use Tree::Simple 'use_weak_refs';
+  
+And from that point on Tree::Simple will use weak references to allow for perl's reference counting to clean things up properly.
+
+For those who are unfamilar with weak references, and how they affect the reference counts, here is a simple illustration. First is the normal model that Tree::Simple uses:
+ 
+ +---------------+
+ | Tree::Simple1 |<---------------------+
+ +---------------+                      |
+ | parent        |                      |
+ | children      |-+                    |
+ +---------------+ |                    |
+                   |                    |
+                   |  +---------------+ |
+                   +->| Tree::Simple2 | |
+                      +---------------+ |
+                      | parent        |-+
+                      | children      |
+                      +---------------+
+                      
+Here, Tree::Simple1 has a reference count of 2 (one for the original variable it is assigned to, and one for the parent reference in Tree::Simple2), and Tree::Simple2 has a reference count of 1 (for the child reference in Tree::Simple2).                       
+                     
+Now, with weak references:
+                     
+ +---------------+
+ | Tree::Simple1 |.......................
+ +---------------+                      :
+ | parent        |                      :
+ | children      |-+                    : <--[ weak reference ]
+ +---------------+ |                    :
+                   |                    :
+                   |  +---------------+ :
+                   +->| Tree::Simple2 | :
+                      +---------------+ :
+                      | parent        |..
+                      | children      |
+                      +---------------+   
+                      
+Now Tree::Simple1 has a reference count of 1 (for the variable it is assigned to) and 1 weakened reference (for the parent reference in Tree::Simple2). And Tree::Simple2 has a reference count of 1, just as before.                                                            
 
 =head1 BUGS
 
@@ -956,14 +974,14 @@ None that I am aware of. The code is pretty thoroughly tested (see L<CODE COVERA
 
 I use L<Devel::Cover> to test the code coverage of my tests, below is the L<Devel::Cover> report on this module's test suite.
  
- ------------------------ ------ ------ ------ ------ ------ ------ ------ 
- File                       stmt branch   cond    sub    pod   time  total
- ------------------------ ------ ------ ------ ------ ------ ------ ------ 
- Tree/Simple.pm             99.6   97.4   91.7  100.0   97.0   95.8   98.1
- Tree/Simple/Visitor.pm    100.0   96.2   90.0  100.0  100.0    4.2   97.6
- ------------------------ ------ ------ ------ ------ ------ ------ ------ 
- Total                      99.7   97.2   91.2  100.0   97.6  100.0   98.0
- ------------------------ ------ ------ ------ ------ ------ ------ ------ 
+ ---------------------------- ------ ------ ------ ------ ------ ------ ------
+ File                           stmt branch   cond    sub    pod   time  total
+ ---------------------------- ------ ------ ------ ------ ------ ------ ------
+ Tree/Simple.pm                 99.6   96.0   92.3  100.0   97.0   95.5   98.0
+ Tree/Simple/Visitor.pm        100.0   96.2   88.2  100.0  100.0    4.5   97.7
+ ---------------------------- ------ ------ ------ ------ ------ ------ ------
+ Total                          99.7   96.1   91.1  100.0   97.6  100.0   97.9
+ ---------------------------- ------ ------ ------ ------ ------ ------ ------
 
 =head1 SEE ALSO
 
@@ -1065,7 +1083,7 @@ stevan little, E<lt>stevan@iinteractive.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2004 by Infinity Interactive, Inc.
+Copyright 2004, 2005 by Infinity Interactive, Inc.
 
 L<http://www.iinteractive.com>
 
