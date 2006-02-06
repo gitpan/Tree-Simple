@@ -1,7 +1,9 @@
 Changes
+Build.PL
 Makefile.PL
 MANIFEST
 README
+META.yml
 lib/Tree/Simple.pm
 lib/Tree/Simple/Visitor.pm
 t/10_Tree_Simple_test.t
