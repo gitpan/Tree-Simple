@@ -1,9 +1,7 @@
 ---
 abstract: 'A simple tree object'
 author:
-  - 'Stevan Little, E<lt>stevan@iinteractive.comE<gt>'
-  - 'Rob Kinyon, E<lt>rob@iinteractive.comE<gt>'
-  - 'Ron Savage E<lt>ron@savage.net.auE<gt> has taken over maintenance as of V 1.19.'
+  - 'Stevan Little <stevan@cpan.org>'
 build_requires:
   Test::Exception: 0.15
   Test::More: 0.47
@@ -19,13 +17,15 @@ name: Tree-Simple
 provides:
   Tree::Simple:
     file: lib/Tree/Simple.pm
-    version: 1.19
+    version: 1.20
   Tree::Simple::Visitor:
     file: lib/Tree/Simple/Visitor.pm
-    version: 1.19
+    version: 1.20
 requires:
   Scalar::Util: 1.18
-  perl: v5.6.0
+  constant: 0
+  strict: 0
+  warnings: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.19
+version: 1.20

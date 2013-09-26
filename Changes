@@ -1,5 +1,10 @@
 Revision history for Perl extension Tree::Simple.
 
+1.20  Thu Sep 26 11:16:00 2013
+	- Merge source from https://github.com/stevan/tree-simple.
+	- Close github issues.
+	- Add bugtracker and license to Build.PL and Makefile.PL.
+
 1.19  Mon Sep 23 08:26:00 2013
 	- Maintenance now by Ron Savage.
 	- Rectify datestamp format in this file.

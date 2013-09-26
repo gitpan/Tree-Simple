@@ -1,10 +1,9 @@
 package Tree::Simple::Visitor;
 
-use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '1.19';
+our $VERSION = '1.20';
 
 use Scalar::Util qw(blessed);
 
@@ -102,7 +101,9 @@ sub visit {
     }
 	# always apply the function
 	# to the tree's node
-    $func->($tree) if ( (defined $self->{_include_trunk}) && $self->{_include_trunk});
+
+    $func->($tree) if (defined($self->{_include_trunk}) && $self->{_include_trunk});
+
 	# then recursively to all its children
 	# if the object is configured that way
 	$tree->traverse($func) if ($self->{depth} == RECURSIVE);
@@ -172,7 +173,7 @@ While I have changed a number of things about this module, I have kept it backwa
   my @accumulator;
   my $visitor = Tree::Simple::Visitor->new(sub {
                         my ($tree) = @_;
-                        push @accumlator, $tree->getNodeValue();
+                        push @accumulator, $tree->getNodeValue();
                         },
                         Tree::Simple::Visitor->RECURSIVE);
 
